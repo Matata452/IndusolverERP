@@ -168,6 +168,69 @@
     display:flex;align-items:center;gap:5px;
   }
   .powered b{color:var(--ink);font-family:'Fraunces',Georgia,serif;font-style:italic;}
+
+  .fab{
+    position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));
+    display:inline-flex;align-items:center;gap:8px;
+    background:var(--accent);color:var(--accent-ink);
+    border:none;border-radius:100px;
+    padding:13px 18px 13px 15px;
+    font-family:inherit;font-size:.9rem;font-weight:700;
+    box-shadow:0 6px 18px rgba(0,0,0,.18);
+    cursor:pointer;z-index:20;
+  }
+  .fab:active{opacity:.85;}
+  .fab svg{width:18px;height:18px;flex-shrink:0;}
+
+  dialog{
+    border:none;border-radius:14px 14px 0 0;
+    padding:0;margin:auto 0 0;
+    width:100%;max-width:460px;
+    background:var(--surface);color:var(--ink);
+    box-shadow:0 -8px 30px rgba(0,0,0,.2);
+  }
+  @media (min-width:520px){
+    dialog{border-radius:14px;margin:auto;}
+  }
+  dialog::backdrop{background:rgba(28,20,16,.45);}
+  .sheet{padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));}
+  .sheet-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:4px;}
+  .sheet-head h2{
+    font-family:'Fraunces',Georgia,serif;font-weight:600;font-style:italic;
+    font-size:1.3rem;margin:0;
+  }
+  .sheet-head p{margin:4px 0 0;font-size:.85rem;color:var(--muted);}
+  .x-btn{
+    background:none;border:none;color:var(--muted);font-size:1.3rem;line-height:1;
+    cursor:pointer;padding:2px 4px;flex-shrink:0;
+  }
+  .field{margin-top:14px;}
+  .field label{display:block;font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+  .field textarea,.field input[type=text],.field input[type=tel]{
+    width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;
+    background:var(--bg);color:var(--ink);font-size:.92rem;font-family:inherit;
+  }
+  .field textarea{min-height:72px;resize:vertical;}
+  .field textarea:focus,.field input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .sheet-err{
+    display:none;margin-top:12px;font-size:.82rem;color:#B3261E;
+    background:#FCEBEA;border:1px solid #F3C6C2;border-radius:8px;padding:8px 10px;
+  }
+  :root:not([data-theme="light"]) .sheet-err{background:#3A1F1C;border-color:#5C332D;color:#F3B5AE;}
+  .sheet-submit{
+    width:100%;margin-top:16px;padding:12px;border:none;border-radius:10px;
+    background:var(--accent);color:var(--accent-ink);font-size:.95rem;font-weight:700;
+    font-family:inherit;cursor:pointer;
+  }
+  .sheet-submit:disabled{opacity:.55;cursor:default;}
+  .sheet-ok{display:none;text-align:center;padding:8px 4px 4px;}
+  .sheet-ok .ico{font-size:2.2rem;margin-bottom:6px;}
+  .sheet-ok p{margin:0;font-size:.92rem;color:var(--good);font-weight:600;}
+  .sheet-ok .close-ok{
+    margin-top:16px;width:100%;padding:11px;border-radius:10px;
+    border:1.5px solid var(--line);background:none;color:var(--ink);
+    font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;
+  }
 </style>
 
 <div class="wrap">
@@ -205,11 +268,53 @@
   </div>
 
   <footer>
-    <p>¿Buscás algo que no está en la lista? Pedilo en el mostrador — Bookbuster te lo consigue.</p>
+    <p>¿Buscás algo que no está en la lista? Tocá el botón de abajo y Bookbuster te lo consigue.</p>
     <span class="powered">Catálogo por <b>Bookbuster</b></span>
   </footer>
 
 </div>
+
+<button class="fab" id="fab-encargo">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 8-16 8 4-8-4-8z"/></svg>
+  Pedir un libro
+</button>
+
+<dialog id="dlg-encargo">
+  <div class="sheet">
+    <form id="form-encargo">
+      <div class="sheet-head">
+        <div>
+          <h2>Pedir un libro</h2>
+          <p>Se lo pasamos directo a Bookbuster.</p>
+        </div>
+        <button type="button" class="x-btn" id="btn-close-x" aria-label="Cerrar">✕</button>
+      </div>
+
+      <div class="field">
+        <label for="f-desc">¿Qué libro necesitás?</label>
+        <textarea id="f-desc" placeholder="Título, autor, o cualquier detalle que tengas..." required></textarea>
+      </div>
+      <div class="field">
+        <label for="f-nombre">Tu nombre</label>
+        <input type="text" id="f-nombre" placeholder="Nombre y apellido" autocomplete="off" required>
+      </div>
+      <div class="field">
+        <label for="f-wsp">WhatsApp (opcional)</label>
+        <input type="tel" id="f-wsp" placeholder="11 1234-5678" autocomplete="off" inputmode="tel">
+      </div>
+
+      <div class="sheet-err" id="sheet-err"></div>
+
+      <button type="submit" class="sheet-submit" id="btn-submit">📩 Enviar pedido</button>
+    </form>
+
+    <div class="sheet-ok" id="sheet-ok">
+      <div class="ico">✅</div>
+      <p>¡Pedido enviado! Bookbuster se va a contactar apenas lo tenga.</p>
+      <button class="close-ok" id="btn-close-ok">Cerrar</button>
+    </div>
+  </div>
+</dialog>
 
 <script>
   const LIBROS = [
@@ -287,4 +392,51 @@
   qEl.addEventListener('input', render);
   sortEl.addEventListener('change', render);
   render();
+
+  // ── Encargo (mock — acá la versión real llamaría a
+  //    google.script.run.registrarEncargo(...), la misma función que
+  //    ya usa el café y que ya notifica por Telegram) ────────────────
+  const dlg      = document.getElementById('dlg-encargo');
+  const form     = document.getElementById('form-encargo');
+  const sheetErr = document.getElementById('sheet-err');
+  const sheetOk  = document.getElementById('sheet-ok');
+  const btnSubmit = document.getElementById('btn-submit');
+
+  function abrirEncargo(){
+    form.hidden = false;
+    sheetOk.style.display = 'none';
+    sheetErr.style.display = 'none';
+    dlg.showModal();
+  }
+  function cerrarEncargo(){ dlg.close(); }
+
+  document.getElementById('fab-encargo').addEventListener('click', abrirEncargo);
+  document.getElementById('btn-close-x').addEventListener('click', cerrarEncargo);
+  document.getElementById('btn-close-ok').addEventListener('click', cerrarEncargo);
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) cerrarEncargo(); });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const desc   = document.getElementById('f-desc').value.trim();
+    const nombre = document.getElementById('f-nombre').value.trim();
+    const wsp    = document.getElementById('f-wsp').value.trim();
+
+    if (!desc)   { sheetErr.textContent = 'Contanos qué libro buscás.'; sheetErr.style.display = ''; return; }
+    if (!nombre) { sheetErr.textContent = 'Ingresá tu nombre.'; sheetErr.style.display = ''; return; }
+    sheetErr.style.display = 'none';
+
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Enviando...';
+
+    // Simulación — la versión real dispara registrarEncargo(cafeId, cafeName,
+    // desc, nombre, wsp, notas), que ya envía el mensaje a Telegram tal cual
+    // lo hace hoy el encargo desde la app del café.
+    setTimeout(() => {
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = '📩 Enviar pedido';
+      form.hidden = true;
+      sheetOk.style.display = '';
+      form.reset();
+    }, 600);
+  });
 </script>
