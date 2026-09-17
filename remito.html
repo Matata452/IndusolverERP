@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;color:#2C1810;background:#FAF7F2;padding:16px;}
+  h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#7C6F64;margin-bottom:8px;}
+  .row{display:flex;gap:12px;margin-bottom:12px;}
+  .col{flex:1;}
+  select,input[type=text],input[type=number],textarea{
+    width:100%;padding:7px 10px;border:1.5px solid #E8E0D5;border-radius:8px;
+    font-size:13px;background:#fff;color:#2C1810;transition:border-color .15s;
+  }
+  select:focus,input:focus,textarea:focus{outline:none;border-color:#8B4513;}
+  textarea{resize:vertical;min-height:54px;font-family:inherit;}
+  .search-wrap{position:relative;margin-bottom:8px;}
+  .search-wrap input{padding-left:28px;}
+  .search-wrap::before{content:'🔍';position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:12px;pointer-events:none;}
+  #results-list{max-height:140px;overflow-y:auto;border:1px solid #E8E0D5;border-radius:8px;background:#fff;margin-bottom:6px;}
+  .result-item{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-bottom:1px solid #F0E8E0;cursor:default;}
+  .result-item:last-child{border-bottom:none;}
+  .result-item:hover{background:#FFF8F5;}
+  .result-info{flex:1;min-width:0;}
+  .result-title{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .result-sub{font-size:11px;color:#7C6F64;}
+  .btn-add-book{background:#8B4513;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+  .btn-add-book:hover{opacity:.85;}
+  #panel-catalogo{background:#FFF8F5;border:1.5px solid #E8C99A;border-radius:8px;padding:10px;margin-bottom:10px;display:none;}
+  #panel-catalogo h3{color:#8B4513;margin-bottom:8px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+  .form-grid .full{grid-column:1/-1;}
+  .field-label{font-size:11px;font-weight:700;color:#7C6F64;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;display:block;}
+  #remito-table-wrap{max-height:160px;overflow-y:auto;margin-bottom:10px;}
+  table{width:100%;border-collapse:collapse;}
+  th{background:#2C1810;color:#fff;padding:6px 8px;font-size:11px;text-align:left;position:sticky;top:0;}
+  td{padding:5px 8px;border-bottom:1px solid #E8E0D5;font-size:12px;vertical-align:middle;}
+  tr:nth-child(even) td{background:#FAF7F2;}
+  td select{padding:3px 6px;font-size:12px;border-radius:5px;}
+  td input[type=number]{padding:3px 6px;font-size:12px;width:90px;border-radius:5px;}
+  .btn-remove{background:none;border:none;color:#CC3333;font-size:16px;cursor:pointer;padding:0 4px;line-height:1;}
+  #stock-list{max-height:260px;overflow-y:auto;border:1px solid #E8E0D5;border-radius:8px;background:#fff;margin-bottom:10px;}
+  .stock-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border-bottom:1px solid #F0E8E0;}
+  .stock-item:last-child{border-bottom:none;}
+  .stock-item:hover{background:#FFF8F5;}
+  .stock-item input[type=checkbox]{width:16px;height:16px;accent-color:#8B4513;flex-shrink:0;}
+  .stock-info{flex:1;min-width:0;}
+  .stock-title{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .stock-sub{font-size:11px;color:#7C6F64;}
+  .badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;flex-shrink:0;}
+  .badge-c{background:#E3F2FD;color:#1565C0;}
+  .badge-f{background:#FFF3E0;color:#BF360C;}
+  .badge-d{background:#EDE7F6;color:#5E35B1;}
+  #panel-donante{background:#FFF8F5;border:1.5px solid #E8C99A;border-radius:8px;padding:10px;margin-bottom:10px;display:none;}
+  #panel-donante h3{color:#8B4513;margin-bottom:8px;}
+  .btn-bar{display:flex;justify-content:flex-end;gap:8px;margin-top:4px;}
+  .btn{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:opacity .15s;}
+  .btn:active{opacity:.8;}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn-primary{background:#8B4513;color:#fff;}
+  .btn-cancel{background:#fff;color:#2C1810;border:1.5px solid #E8E0D5;}
+  .btn-link{background:none;border:none;color:#8B4513;font-size:12px;cursor:pointer;padding:4px 0;text-decoration:underline;}
+  .empty{text-align:center;padding:20px;color:#7C6F64;font-size:13px;}
+  .msg-error{background:#FFF0F0;border:1px solid #FFAAAA;border-radius:6px;padding:8px 12px;font-size:13px;color:#CC0000;margin-bottom:8px;display:none;}
+  .msg-ok{background:#EAF4EE;border:1px solid #95C9AB;border-radius:6px;padding:8px 12px;font-size:13px;color:#2D6A4F;margin-bottom:8px;display:none;}
+  .counter{font-size:12px;color:#7C6F64;margin-bottom:6px;}
+  .divider{height:1px;background:#E8E0D5;margin:10px 0;}
+</style>
+</head>
+<body>
+
+
+<div id="msg-error" class="msg-error"></div>
+<div id="msg-ok"    class="msg-ok"></div>
+
+
+<div style="margin-bottom:12px">
+  <span class="field-label">Café</span>
+  <select id="cafe-select" onchange="onCafeChange()">
+    <option value="">— Seleccioná un café —</option>
+  </select>
+</div>
+
+
+<!-- MODO ENTREGA -->
+<div id="sec-entrega">
+  <div class="divider"></div>
+  <h3 style="margin-bottom:8px">Buscar libro en el Catálogo</h3>
+  <div class="search-wrap">
+    <input type="text" id="search-input" placeholder="Título, autor o ISBN..." oninput="filtrarCatalogo(this.value)" autocomplete="off">
+  </div>
+  <div id="results-list">
+    <div class="empty">Escribí para buscar</div>
+  </div>
+  <button class="btn-link" onclick="togglePanelCatalogo()">+ ¿No encontrás el libro? Agregarlo al Catálogo</button>
+  <div id="panel-catalogo">
+    <h3>Agregar libro al Catálogo</h3>
+    <div class="form-grid">
+      <div class="full">
+        <span class="field-label">Título *</span>
+        <input type="text" id="cat-titulo" placeholder="Nombre del libro">
+      </div>
+      <div>
+        <span class="field-label">Autor *</span>
+        <input type="text" id="cat-autor" placeholder="Apellido, Nombre">
+      </div>
+      <div>
+        <span class="field-label">ISBN</span>
+        <input type="text" id="cat-isbn" placeholder="9789...">
+      </div>
+      <div class="full">
+        <span class="field-label">Editorial</span>
+        <input type="text" id="cat-editorial" placeholder="Nombre de la editorial">
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:auto;padding:6px 16px;font-size:12px" onclick="guardarEnCatalogo()">Guardar en Catálogo</button>
+    <button class="btn btn-cancel"  style="width:auto;padding:6px 12px;font-size:12px;margin-left:6px" onclick="togglePanelCatalogo()">Cancelar</button>
+  </div>
+  <div id="panel-donante">
+    <h3>🎁 Datos del donante</h3>
+    <div class="form-grid">
+      <div>
+        <span class="field-label">Nombre *</span>
+        <input type="text" id="donante-nombre" placeholder="Nombre y apellido">
+      </div>
+      <div>
+        <span class="field-label">Teléfono</span>
+        <input type="text" id="donante-telefono" placeholder="11 1234-5678">
+      </div>
+    </div>
+    <div style="font-size:11px;color:#7C6F64">Se aplica a los libros marcados como "Donación" en este remito.</div>
+  </div>
+  <div class="divider"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+    <h3 style="margin:0">Libros en este remito</h3>
+    <span class="counter" id="counter-entrega">0 libros</span>
+  </div>
+  <div id="remito-table-wrap">
+    <div class="empty" id="remito-empty">Todavía no agregaste libros</div>
+    <table id="remito-table" style="display:none">
+      <thead><tr>
+        <th>Título / Autor</th>
+        <th>Modalidad</th>
+        <th>Costo firme</th>
+        <th></th>
+      </tr></thead>
+      <tbody id="remito-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- MODO RETIRO -->
+<div id="sec-retiro" style="display:none">
+  <div class="divider"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+    <h3 style="margin:0">Stock actual del café</h3>
+    <span class="counter" id="counter-retiro">0 seleccionados</span>
+  </div>
+  <div class="search-wrap">
+    <input type="text" id="search-retiro" placeholder="Título, autor o ISBN..." oninput="filtrarStockRetiro(this.value)" autocomplete="off">
+  </div>
+  <div id="stock-list">
+    <div class="empty">Seleccioná un café para ver el stock</div>
+  </div>
+</div>
+
+
+<div class="divider"></div>
+
+
+<div style="margin-bottom:12px">
+  <span class="field-label">Notas (opcional)</span>
+  <textarea id="notas" placeholder="Cualquier observación..."></textarea>
+</div>
+
+
+<div class="btn-bar">
+  <button class="btn btn-cancel" onclick="google.script.host.close()">Cancelar</button>
+  <button class="btn btn-primary" id="btn-crear" onclick="crearRemito()" disabled>📄 Crear remito</button>
+</div>
+
+
+<script>
+const MODO = '<?= modo ?>';
+
+
+let catalogoData    = [];
+let remitoItems     = [];
+let stockData       = [];
+let selectedRetiro  = new Set();
+let cafeSelec       = null;
+let _catalogoResults = [];
+
+
+window.onload = function() {
+  document.getElementById('sec-entrega').style.display = MODO === 'entrega' ? '' : 'none';
+  document.getElementById('sec-retiro').style.display  = MODO === 'retiro'  ? '' : 'none';
+
+
+  google.script.run
+    .withSuccessHandler(function(cafes) {
+      const sel = document.getElementById('cafe-select');
+      cafes.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id; opt.textContent = c.nombre;
+        sel.appendChild(opt);
+      });
+    })
+    .getCafesLista();
+
+
+  if (MODO === 'entrega') {
+    google.script.run
+      .withSuccessHandler(function(data) { catalogoData = data || []; })
+      .getCatalogo();
+  }
+};
+
+
+function onCafeChange() {
+  const sel = document.getElementById('cafe-select');
+  const opt = sel.options[sel.selectedIndex];
+  if (!sel.value) { cafeSelec = null; actualizarBtnCrear(); return; }
+  cafeSelec = { id: sel.value, nombre: opt.textContent };
+  actualizarBtnCrear();
+  if (MODO === 'retiro') cargarStockRetiro(sel.value);
+}
+
+
+function filtrarCatalogo(q) {
+  const el = document.getElementById('results-list');
+  if (!q.trim()) { el.innerHTML = '<div class="empty">Escribí para buscar</div>'; return; }
+  const s   = q.toLowerCase();
+  const res = catalogoData.filter(b =>
+    (b.titulo || '').toLowerCase().includes(s) ||
+    (b.autor  || '').toLowerCase().includes(s) ||
+    String(b.isbn || '').includes(s)
+  );
+  if (!res.length) {
+    el.innerHTML = '<div class="empty">No encontrado. Usá el botón de abajo para agregarlo al Catálogo.</div>';
+    return;
+  }
+  _catalogoResults = res.slice(0, 30);
+  el.innerHTML = _catalogoResults.map((b, i) => `
+    <div class="result-item">
+      <div class="result-info">
+        <div class="result-title">${x(b.titulo)}</div>
+        <div class="result-sub">${x(b.autor)}${b.isbn ? ' · ' + x(b.isbn) : ''}</div>
+      </div>
+      <button class="btn-add-book" onclick="agregarLibro(${i})">+ Agregar</button>
+    </div>`).join('');
+}
+
+
+function agregarLibro(i) {
+  const libro = _catalogoResults[i];
+  remitoItems.push({
+    isbn:        libro.isbn      || '',
+    titulo:      libro.titulo    || '',
+    autor:       libro.autor     || '',
+    editorial:   libro.editorial || '',
+    modalidad:   'consignacion',
+    costo_firme: ''
+  });
+  renderRemitoTable();
+  actualizarBtnCrear();
+  document.getElementById('search-input').value = '';
+  document.getElementById('results-list').innerHTML = '<div class="empty">Escribí para buscar</div>';
+}
+
+
+function renderRemitoTable() {
+  const tbody = document.getElementById('remito-tbody');
+  const table = document.getElementById('remito-table');
+  const empty = document.getElementById('remito-empty');
+  const count = document.getElementById('counter-entrega');
+
+
+  count.textContent = remitoItems.length + ' libro' + (remitoItems.length !== 1 ? 's' : '');
+
+
+  if (!remitoItems.length) {
+    empty.style.display = '';
+    table.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  table.style.display = '';
+
+
+  tbody.innerHTML = remitoItems.map((item, i) => `
+    <tr>
+      <td>
+        <div style="font-weight:600;font-size:12px">${x(item.titulo)}</div>
+        <div style="font-size:11px;color:#7C6F64">${x(item.autor)}</div>
+      </td>
+      <td>
+        <select onchange="setModalidad(${i}, this.value)">
+          <option value="consignacion" ${item.modalidad==='consignacion'?'selected':''}>Consignación</option>
+          <option value="firme"        ${item.modalidad==='firme'?'selected':''}>Firme</option>
+          <option value="donacion"     ${item.modalidad==='donacion'?'selected':''}>Donación</option>
+        </select>
+      </td>
+      <td>
+        ${item.modalidad === 'firme'
+          ? `<input type="number" placeholder="$ costo" value="${x(item.costo_firme)}" onchange="setCosto(${i}, this.value)" min="0">`
+          : '<span style="color:#bbb">—</span>'}
+      </td>
+      <td><button class="btn-remove" onclick="quitarLibro(${i})">✕</button></td>
+    </tr>`).join('');
+}
+
+
+function setModalidad(i, val) {
+  remitoItems[i].modalidad   = val;
+  remitoItems[i].costo_firme = '';
+  renderRemitoTable();
+  actualizarPanelDonante();
+}
+
+
+function setCosto(i, val) { remitoItems[i].costo_firme = val; }
+
+
+function quitarLibro(i) {
+  remitoItems.splice(i, 1);
+  renderRemitoTable();
+  actualizarBtnCrear();
+  actualizarPanelDonante();
+}
+
+
+function hayItemDonacion() {
+  return remitoItems.some(it => it.modalidad === 'donacion');
+}
+
+
+function actualizarPanelDonante() {
+  document.getElementById('panel-donante').style.display = hayItemDonacion() ? 'block' : 'none';
+}
+
+
+function togglePanelCatalogo() {
+  const p = document.getElementById('panel-catalogo');
+  const q = document.getElementById('search-input').value.trim();
+  if (p.style.display === 'none' || !p.style.display) {
+    p.style.display = 'block';
+    if (q) document.getElementById('cat-titulo').value = q;
+  } else {
+    p.style.display = 'none';
+  }
+}
+
+
+function guardarEnCatalogo() {
+  const titulo    = document.getElementById('cat-titulo').value.trim();
+  const autor     = document.getElementById('cat-autor').value.trim();
+  const isbn      = document.getElementById('cat-isbn').value.trim();
+  const editorial = document.getElementById('cat-editorial').value.trim();
+
+
+  if (!titulo) { showError('El título es obligatorio.'); return; }
+  if (!autor)  { showError('El autor es obligatorio.');  return; }
+
+
+  const btn = document.querySelector('#panel-catalogo .btn-primary');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.disabled = false; btn.textContent = 'Guardar en Catálogo';
+      if (!res.ok) { showError(res.error); return; }
+      catalogoData.push(res.libro);
+      showOk('✓ Libro agregado al Catálogo. Ya podés buscarlo y agregarlo al remito.');
+      document.getElementById('panel-catalogo').style.display = 'none';
+      ['cat-titulo','cat-autor','cat-isbn','cat-editorial'].forEach(id => document.getElementById(id).value = '');
+    })
+    .withFailureHandler(function() {
+      btn.disabled = false; btn.textContent = 'Guardar en Catálogo';
+      showError('Error al guardar. Intentá de nuevo.');
+    })
+    .agregarLibroAlCatalogo({ titulo, autor, isbn, editorial });
+}
+
+
+function cargarStockRetiro(cafeId) {
+  const el = document.getElementById('stock-list');
+  el.innerHTML = '<div class="empty">Cargando...</div>';
+  selectedRetiro = new Set();
+  const search = document.getElementById('search-retiro');
+  if (search) search.value = '';
+  google.script.run
+    .withSuccessHandler(function(data) {
+      stockData = data || [];
+      renderStockRetiro(stockData);
+      actualizarContadorRetiro();
+    })
+    .withFailureHandler(function() {
+      el.innerHTML = '<div class="empty">Error al cargar el stock.</div>';
+    })
+    .getStockParaRetiro(cafeId);
+}
+
+
+function filtrarStockRetiro(q) {
+  q = (q || '').trim().toLowerCase();
+  if (!q) { renderStockRetiro(stockData); return; }
+  const filtrado = stockData.filter(b =>
+    (b.titulo || '').toLowerCase().includes(q) ||
+    (b.autor  || '').toLowerCase().includes(q) ||
+    String(b.isbn || '').includes(q)
+  );
+  renderStockRetiro(filtrado);
+}
+
+
+function renderStockRetiro(lista) {
+  const el = document.getElementById('stock-list');
+  if (!stockData.length) {
+    el.innerHTML = '<div class="empty">No hay libros en este café.</div>';
+    return;
+  }
+  if (!lista.length) {
+    el.innerHTML = '<div class="empty">No encontramos ese libro en el stock.</div>';
+    return;
+  }
+  el.innerHTML = lista.map((b) => `
+    <div class="stock-item">
+      <input type="checkbox" data-id="${x(b.id_ejemplar)}" onchange="toggleRetiroSelect(this)" ${selectedRetiro.has(b.id_ejemplar) ? 'checked' : ''}>
+      <div class="stock-info">
+        <div class="stock-title">${x(b.titulo)}</div>
+        <div class="stock-sub">${x(b.autor)}${b.isbn ? ' · ISBN ' + x(b.isbn) : ''}</div>
+      </div>
+      <span class="badge ${b.modalidad === 'firme' ? 'badge-f' : (b.modalidad === 'donacion' ? 'badge-d' : 'badge-c')}">
+        ${b.modalidad === 'firme' ? 'Firme' : (b.modalidad === 'donacion' ? 'Donación' : 'Consig')}
+      </span>
+    </div>`).join('');
+}
+
+
+function toggleRetiroSelect(chk) {
+  if (chk.checked) selectedRetiro.add(chk.dataset.id);
+  else selectedRetiro.delete(chk.dataset.id);
+  actualizarContadorRetiro();
+}
+
+
+function actualizarContadorRetiro() {
+  const n = selectedRetiro.size;
+  document.getElementById('counter-retiro').textContent = n + ' seleccionado' + (n !== 1 ? 's' : '');
+  actualizarBtnCrear();
+}
+
+
+function actualizarBtnCrear() {
+  const btn = document.getElementById('btn-crear');
+  if (!cafeSelec) { btn.disabled = true; return; }
+  if (MODO === 'entrega') {
+    btn.disabled = remitoItems.length === 0;
+  } else {
+    btn.disabled = selectedRetiro.size === 0;
+  }
+}
+
+
+function crearRemito() {
+  if (!cafeSelec) { showError('Seleccioná un café.'); return; }
+  const notas = document.getElementById('notas').value.trim();
+  const btn   = document.getElementById('btn-crear');
+  btn.disabled = true;
+  btn.textContent = '⏳ Creando...';
+  clearMsgs();
+
+
+  if (MODO === 'entrega') {
+    let donanteNombre = '', donanteTelefono = '';
+    if (hayItemDonacion()) {
+      donanteNombre   = document.getElementById('donante-nombre').value.trim();
+      donanteTelefono = document.getElementById('donante-telefono').value.trim();
+      if (!donanteNombre) {
+        showError('Ingresá el nombre del donante — hay libros marcados como Donación.');
+        btn.disabled = false;
+        btn.textContent = '📄 Crear remito';
+        return;
+      }
+    }
+    google.script.run
+      .withSuccessHandler(onRemitoCreado)
+      .withFailureHandler(onRemitoError)
+      .crearRemitoEntrega({
+        cafeId:   cafeSelec.id,
+        cafeName: cafeSelec.nombre,
+        items:    remitoItems,
+        notas,
+        donanteNombre,
+        donanteTelefono
+      });
+  } else {
+    const items = stockData.filter(b => selectedRetiro.has(b.id_ejemplar));
+    google.script.run
+      .withSuccessHandler(onRemitoCreado)
+      .withFailureHandler(onRemitoError)
+      .crearRemitoRetiro({
+        cafeId:   cafeSelec.id,
+        cafeName: cafeSelec.nombre,
+        items,
+        notas
+      });
+  }
+}
+
+
+function onRemitoCreado(res) {
+  const btn = document.getElementById('btn-crear');
+  if (!res.ok) {
+    btn.disabled = false;
+    btn.textContent = '📄 Crear remito';
+    showError('Error: ' + res.error);
+    return;
+  }
+  document.getElementById('msg-ok').style.display = '';
+  document.getElementById('msg-ok').innerHTML =
+    '✅ Remito <strong>' + res.id + '</strong> creado. ' +
+    '<a href="' + res.pdfUrl + '" target="_blank">📄 Abrir PDF</a>';
+  btn.textContent = '✓ Creado';
+
+
+  setTimeout(function() {
+    remitoItems = [];
+    renderRemitoTable();
+    document.getElementById('notas').value = '';
+    document.getElementById('cafe-select').value = '';
+    const dn = document.getElementById('donante-nombre');
+    const dt = document.getElementById('donante-telefono');
+    if (dn) dn.value = '';
+    if (dt) dt.value = '';
+    actualizarPanelDonante();
+    cafeSelec = null;
+    btn.disabled = true;
+    btn.textContent = '📄 Crear remito';
+    if (MODO === 'retiro') {
+      stockData = [];
+      selectedRetiro = new Set();
+      const search = document.getElementById('search-retiro');
+      if (search) search.value = '';
+      document.getElementById('stock-list').innerHTML = '<div class="empty">Seleccioná un café para ver el stock</div>';
+      document.getElementById('counter-retiro').textContent = '0 seleccionados';
+    }
+  }, 4000);
+}
+
+
+function onRemitoError() {
+  const btn = document.getElementById('btn-crear');
+  btn.disabled = false;
+  btn.textContent = '📄 Crear remito';
+  showError('Error al crear el remito. Intentá de nuevo.');
+}
+
+
+function x(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+
+function showError(msg) {
+  const el = document.getElementById('msg-error');
+  el.textContent = msg; el.style.display = '';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+
+function showOk(msg) {
+  const el = document.getElementById('msg-ok');
+  el.innerHTML = msg; el.style.display = '';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+
+function clearMsgs() {
+  document.getElementById('msg-error').style.display = 'none';
+  document.getElementById('msg-ok').style.display    = 'none';
+}
+</script>
+</body>
+</html>
