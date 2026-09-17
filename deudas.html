@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;color:#2C1810;background:#FAF7F2;padding:16px;}
+  h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#7C6F64;margin-bottom:8px;}
+  select{width:100%;padding:7px 10px;border:1.5px solid #E8E0D5;border-radius:8px;font-size:13px;background:#fff;color:#2C1810;margin-bottom:10px;}
+  select:focus{outline:none;border-color:#8B4513;}
+  .field-label{font-size:11px;font-weight:700;color:#7C6F64;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;display:block;}
+  #deuda-list{max-height:320px;overflow-y:auto;border:1px solid #E8E0D5;border-radius:8px;background:#fff;margin-bottom:10px;}
+  .deuda-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-bottom:1px solid #F0E8E0;}
+  .deuda-item:last-child{border-bottom:none;}
+  .deuda-item:hover{background:#FFF8F5;}
+  .deuda-item input[type=checkbox]{width:16px;height:16px;accent-color:#8B4513;flex-shrink:0;}
+  .deuda-info{flex:1;min-width:0;}
+  .deuda-titulo{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .deuda-sub{font-size:11px;color:#7C6F64;}
+  .deuda-monto{font-weight:700;font-size:13px;color:#BF360C;flex-shrink:0;white-space:nowrap;}
+  .empty{text-align:center;padding:24px;color:#7C6F64;font-size:13px;}
+  .totales{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:10px;}
+  .totales .num{font-weight:700;color:#8B4513;}
+  .btn-bar{display:flex;justify-content:flex-end;gap:8px;margin-top:4px;}
+  .btn{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:opacity .15s;}
+  .btn:active{opacity:.8;}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .btn-primary{background:#8B4513;color:#fff;}
+  .btn-cancel{background:#fff;color:#2C1810;border:1.5px solid #E8E0D5;}
+  .msg-error{background:#FFF0F0;border:1px solid #FFAAAA;border-radius:6px;padding:8px 12px;font-size:13px;color:#CC0000;margin-bottom:8px;display:none;}
+  .msg-ok{background:#EAF4EE;border:1px solid #95C9AB;border-radius:6px;padding:8px 12px;font-size:13px;color:#2D6A4F;margin-bottom:8px;display:none;}
+</style>
+</head>
+<body>
+
+<div id="msg-error" class="msg-error"></div>
+<div id="msg-ok"    class="msg-ok"></div>
+
+<span class="field-label">Filtrar por café</span>
+<select id="cafe-filtro" onchange="cargarDeudas()">
+  <option value="">— Todos los cafés —</option>
+</select>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+  <h3 style="margin:0">Pendientes de transferir</h3>
+  <span id="counter" style="font-size:12px;color:#7C6F64">0 pendientes</span>
+</div>
+<div id="deuda-list">
+  <div class="empty">Cargando...</div>
+</div>
+
+<div class="totales">
+  <span>Seleccionado: <span class="num" id="total-seleccionado">$ 0</span></span>
+</div>
+
+<div class="btn-bar">
+  <button class="btn btn-cancel" onclick="google.script.host.close()">Cerrar</button>
+  <button class="btn btn-primary" id="btn-pagado" onclick="marcarPagado()" disabled>✓ Marcar como pagado</button>
+</div>
+
+<script>
+let deudas = [];
+
+window.onload = function() {
+  google.script.run
+    .withSuccessHandler(function(cafes) {
+      const sel = document.getElementById('cafe-filtro');
+      cafes.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id; opt.textContent = c.nombre;
+        sel.appendChild(opt);
+      });
+    })
+    .getCafesLista();
+
+  cargarDeudas();
+};
+
+function cargarDeudas() {
+  const cafeId = document.getElementById('cafe-filtro').value;
+  const el = document.getElementById('deuda-list');
+  el.innerHTML = '<div class="empty">Cargando...</div>';
+  clearMsgs();
+  google.script.run
+    .withSuccessHandler(function(data) {
+      deudas = data || [];
+      renderLista();
+    })
+    .withFailureHandler(function() {
+      el.innerHTML = '<div class="empty">Error al cargar las deudas.</div>';
+    })
+    .getDeudasPendientes(cafeId || null);
+}
+
+function renderLista() {
+  const el = document.getElementById('deuda-list');
+  document.getElementById('counter').textContent = deudas.length + ' pendiente' + (deudas.length !== 1 ? 's' : '');
+  if (!deudas.length) {
+    el.innerHTML = '<div class="empty">No hay deudas pendientes 🎉</div>';
+    actualizarTotal();
+    return;
+  }
+  el.innerHTML = deudas.map((d, i) => `
+    <div class="deuda-item">
+      <input type="checkbox" id="chk-${i}" onchange="actualizarTotal()">
+      <div class="deuda-info">
+        <div class="deuda-titulo">${x(d.titulo)}</div>
+        <div class="deuda-sub">${x(d.cafe)} · ${fDate(d.fecha)}</div>
+      </div>
+      <div class="deuda-monto">${fmt(d.monto)}</div>
+    </div>`).join('');
+  actualizarTotal();
+}
+
+function actualizarTotal() {
+  let total = 0, checked = 0;
+  deudas.forEach((d, i) => {
+    const chk = document.getElementById('chk-' + i);
+    if (chk && chk.checked) { total += Number(d.monto) || 0; checked++; }
+  });
+  document.getElementById('total-seleccionado').textContent = fmt(total);
+  document.getElementById('btn-pagado').disabled = checked === 0;
+}
+
+function marcarPagado() {
+  const ids = [];
+  deudas.forEach((d, i) => {
+    const chk = document.getElementById('chk-' + i);
+    if (chk && chk.checked) ids.push(d.id);
+  });
+  if (!ids.length) return;
+  const btn = document.getElementById('btn-pagado');
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.textContent = '✓ Marcar como pagado';
+      if (!res.ok) { showError(res.error); btn.disabled = false; return; }
+      showOk('✓ ' + res.actualizadas + ' pago(s) registrado(s).');
+      cargarDeudas();
+    })
+    .withFailureHandler(function() {
+      btn.disabled = false;
+      btn.textContent = '✓ Marcar como pagado';
+      showError('Error al guardar. Intentá de nuevo.');
+    })
+    .marcarDeudasPagadas(ids);
+}
+
+function fmt(n) {
+  n = Math.round(Number(n) || 0);
+  let s = n.toString(), r = '';
+  for (let i = 0; i < s.length; i++) { if (i > 0 && (s.length - i) % 3 === 0) r += '.'; r += s[i]; }
+  return '$ ' + r;
+}
+
+function fDate(d) {
+  if (!d) return '';
+  const dt = d instanceof Date ? d : new Date(d);
+  if (isNaN(dt)) return '';
+  return dt.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+}
+
+function x(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function showError(msg) {
+  const el = document.getElementById('msg-error');
+  el.textContent = msg; el.style.display = '';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+function showOk(msg) {
+  const el = document.getElementById('msg-ok');
+  el.textContent = msg; el.style.display = '';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+function clearMsgs() {
+  document.getElementById('msg-error').style.display = 'none';
+  document.getElementById('msg-ok').style.display    = 'none';
+}
+</script>
+</body>
+</html>

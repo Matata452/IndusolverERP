@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;color:#2C1810;background:#FAF7F2;padding:16px;}
+  h3{font-size:1rem;font-weight:700;margin-bottom:12px;color:#2C1810;}
+  .label{display:block;font-size:.72rem;font-weight:700;color:#7C6F64;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;margin-top:12px;}
+  input,select{width:100%;padding:8px 10px;border:1.5px solid #E8E0D5;border-radius:8px;font-size:.93rem;background:#fff;color:#2C1810;-webkit-appearance:none;appearance:none;}
+  input:focus,select:focus{outline:none;border-color:#8B4513;}
+  .enc-card{background:#fff;border:1.5px solid #E8E0D5;border-radius:10px;padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:border-color .15s;}
+  .enc-card:hover{border-color:#8B4513;}
+  .enc-card.on{border-color:#8B4513;background:#FFF8F5;}
+  .enc-title{font-weight:600;font-size:.9rem;}
+  .enc-sub{font-size:.78rem;color:#7C6F64;margin-top:2px;}
+  .btn{width:100%;padding:10px;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:14px;}
+  .btn-primary{background:#8B4513;color:#fff;}
+  .btn:disabled{opacity:.45;cursor:default;}
+  .empty{text-align:center;padding:24px;color:#7C6F64;font-size:.88rem;}
+  .success{text-align:center;padding:24px;}
+  .success .ico{font-size:2.5rem;margin-bottom:8px;}
+  .success p{color:#2D6A4F;font-weight:600;}
+  .error{background:#FFF3E0;border:1px solid #FFB74D;border-radius:8px;padding:8px 10px;font-size:.83rem;margin-top:10px;display:none;}
+</style>
+</head>
+<body>
+<div id="step1">
+  <h3>Seleccioná el encargo a gestionar</h3>
+  <div id="enc-list"><div class="empty">Cargando...</div></div>
+</div>
+
+<div id="step2" style="display:none">
+  <h3 id="s2-title">Completá los datos del libro</h3>
+  <div id="enc-resumen" style="background:#EAF4EE;border-radius:8px;padding:10px 12px;margin-bottom:4px;font-size:.85rem;color:#2D6A4F;"></div>
+  <span class="label">Título</span>
+  <input type="text" id="f-titulo" placeholder="Título del libro" autocomplete="off">
+  <span class="label">Autor</span>
+  <input type="text" id="f-autor" placeholder="Nombre del autor" autocomplete="off">
+  <span class="label">Editorial (opcional)</span>
+  <input type="text" id="f-editorial" placeholder="Editorial" autocomplete="off">
+  <span class="label">ISBN (opcional)</span>
+  <input type="text" id="f-isbn" placeholder="9789..." autocomplete="off" inputmode="numeric">
+  <div class="error" id="err-msg"></div>
+  <button class="btn btn-primary" id="btn-confirm" onclick="confirmar()">✓ Confirmar y enviar al café</button>
+  <button class="btn" style="background:#fff;border:1.5px solid #E8E0D5;color:#2C1810;margin-top:6px" onclick="volver()">← Volver</button>
+</div>
+
+<div id="step3" style="display:none">
+  <div class="success">
+    <div class="ico">✅</div>
+    <p id="success-msg"></p>
+  </div>
+  <button class="btn btn-primary" onclick="resetForm()">Gestionar otro encargo</button>
+</div>
+
+<script>
+let encargos=[], selected=null;
+
+google.script.run
+  .withSuccessHandler(function(d){ encargos=d||[]; renderList(); })
+  .withFailureHandler(function(){ document.getElementById('enc-list').innerHTML='<div class="empty">Error al cargar encargos.</div>'; })
+  .getPendingEncargos();
+
+function renderList(){
+  const el=document.getElementById('enc-list');
+  if(!encargos.length){el.innerHTML='<div class="empty">No hay encargos pendientes.</div>';return;}
+  el.innerHTML=encargos.map((e,i)=>`
+    <div class="enc-card" id="ecard-${i}" onclick="selectEnc(${i})">
+      <div class="enc-title">${x(e.descripcion)}</div>
+      <div class="enc-sub">${x(e.cafe)} · ${x(e.cliente_nombre)}${e.cliente_whatsapp?' · '+x(e.cliente_whatsapp):''}</div>
+      <div class="enc-sub" style="margin-top:2px;color:#aaa">${fDate(e.fecha)}</div>
+    </div>`).join('');
+}
+
+function selectEnc(i){
+  document.querySelectorAll('.enc-card').forEach(c=>c.classList.remove('on'));
+  document.getElementById('ecard-'+i).classList.add('on');
+  selected=encargos[i];
+  const resumeEl=document.getElementById('enc-resumen');
+  resumeEl.innerHTML='<strong>'+x(selected.cafe)+'</strong> · '+x(selected.descripcion)+'<br>'+x(selected.cliente_nombre)+(selected.cliente_whatsapp?' · '+x(selected.cliente_whatsapp):'');
+  document.getElementById('s2-title').textContent='Datos del libro para '+selected.cafe;
+  document.getElementById('step1').style.display='none';
+  document.getElementById('step2').style.display='';
+}
+
+function volver(){
+  document.getElementById('step1').style.display='';
+  document.getElementById('step2').style.display='none';
+  document.getElementById('err-msg').style.display='none';
+}
+
+function confirmar(){
+  const titulo=document.getElementById('f-titulo').value.trim();
+  if(!titulo){showErr('Ingresá el título del libro.');return;}
+  const btn=document.getElementById('btn-confirm');
+  btn.disabled=true;btn.textContent='Guardando...';
+  google.script.run
+    .withSuccessHandler(function(res){
+      if(res.ok){
+        document.getElementById('success-msg').textContent=
+          '¡Listo! "'+titulo+'" ya está en camino a '+selected.cafe+'.';
+        document.getElementById('step2').style.display='none';
+        document.getElementById('step3').style.display='';
+      } else {
+        showErr('Error: '+res.error);
+        btn.disabled=false;btn.textContent='✓ Confirmar y enviar al café';
+      }
+    })
+    .withFailureHandler(function(){
+      showErr('Error al guardar. Intentá de nuevo.');
+      btn.disabled=false;btn.textContent='✓ Confirmar y enviar al café';
+    })
+    .gestionarEncargo({
+      encargoId:  selected.id,
+      cafeId:     selected.id_cafe,
+      titulo:     titulo,
+      autor:      document.getElementById('f-autor').value.trim(),
+      editorial:  document.getElementById('f-editorial').value.trim(),
+      isbn:       document.getElementById('f-isbn').value.trim()
+    });
+}
+
+function resetForm(){
+  selected=null;
+  ['f-titulo','f-autor','f-editorial','f-isbn'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('err-msg').style.display='none';
+  document.getElementById('step2').style.display='none';
+  document.getElementById('step3').style.display='none';
+  document.getElementById('step1').style.display='';
+  google.script.run
+    .withSuccessHandler(function(d){encargos=d||[];renderList();})
+    .getPendingEncargos();
+}
+
+function showErr(msg){const el=document.getElementById('err-msg');el.textContent=msg;el.style.display='';}
+function fDate(d){if(!d)return '';const dt=d instanceof Date?d:new Date(d);if(isNaN(dt))return '';return dt.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'});}
+function x(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>

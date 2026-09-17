@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: -apple-system, sans-serif; padding: 20px; color: #2C1810; background: #FAF7F2; }
+    h3 { margin-bottom: 15px; }
+    input[type=month] { width: 100%; padding: 10px; border: 1.5px solid #E8E0D5; border-radius: 8px; font-size: 15px; margin-bottom: 20px; }
+    .btn { width: 100%; padding: 10px; background: #8B4513; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+    #msg { margin-top: 15px; font-size: 14px; text-align: center; }
+  </style>
+</head>
+<body>
+  <h3>📊 Reporte Mensual</h3>
+  <label style="font-size: 12px; font-weight: bold; color: #7C6F64; margin-bottom: 5px; display: block;">Seleccioná el mes</label>
+  <input type="month" id="mes-input">
+
+  <button class="btn" id="btn-generar" onclick="generar()">Crear PDF</button>
+  <div id="msg"></div>
+
+  <script>
+    // Setear el mes actual por defecto
+    const today = new Date();
+    document.getElementById('mes-input').value = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+
+    function generar() {
+      const mes = document.getElementById('mes-input').value;
+      if (!mes) return;
+
+      const btn = document.getElementById('btn-generar');
+      const msg = document.getElementById('msg');
+      btn.disabled = true;
+      btn.textContent = 'Calculando...';
+      msg.innerHTML = '';
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if(res.ok) {
+            msg.innerHTML = `✅ ¡Listo! <br><br><a href="${res.url}" target="_blank" style="color:#8B4513; font-weight:bold;">📄 Abrir PDF</a>`;
+            btn.textContent = 'Crear PDF';
+            btn.disabled = false;
+          } else {
+            msg.innerHTML = '❌ Error: ' + res.error;
+            btn.disabled = false;
+            btn.textContent = 'Crear PDF';
+          }
+        })
+        .withFailureHandler(function(err) {
+          msg.innerHTML = '❌ Error de conexión.';
+          btn.disabled = false;
+          btn.textContent = 'Crear PDF';
+        })
+        .generarPdfReporteMensual(mes);
+    }
+  </script>
+</body>
+</html>
