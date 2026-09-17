@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Bookbuster</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#FAF7F2; --card:#FFFFFF; --primary:#2C1810; --accent:#8B4513;
+      --green:#2D6A4F; --green-bg:#EAF4EE; --muted:#7C6F64; --border:#E8E0D5;
+      --shadow:0 1px 4px rgba(44,24,16,.08); --nav-h:64px; --hdr-h:54px;
+    }
+    html,body{height:100%;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--primary);font-size:16px;line-height:1.5;-webkit-tap-highlight-color:transparent;}
+    #app{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto;}
+    header{background:var(--primary);color:#fff;height:var(--hdr-h);padding:0 1rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+    header .brand{font-size:1rem;font-weight:700;}
+    header .cafe{font-size:.82rem;opacity:.65;}
+    main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+    .screen{display:none;padding:1rem 1rem calc(var(--nav-h) + .5rem);}
+    .screen.active{display:block;}
+    nav{background:var(--card);border-top:1px solid var(--border);height:var(--nav-h);display:flex;flex-shrink:0;}
+    nav button{flex:1;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--muted);font-size:.68rem;font-weight:600;letter-spacing:.3px;text-transform:uppercase;padding:0;transition:color .15s;}
+    nav button .ico{font-size:1.5rem;line-height:1;}
+    nav button.on{color:var(--accent);}
+    .card{background:var(--card);border-radius:12px;padding:1rem;margin-bottom:.75rem;box-shadow:var(--shadow);}
+    .label{display:block;font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.35rem;}
+    .section-title{font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:1.25rem 0 .5rem;}
+    input[type=text],input[type=number],textarea{width:100%;padding:.75rem 1rem;border:1.5px solid var(--border);border-radius:10px;font-size:1rem;background:#fff;color:var(--primary);transition:border-color .15s;-webkit-appearance:none;appearance:none;}
+    input:focus,textarea:focus{outline:none;border-color:var(--accent);}
+    textarea{resize:vertical;min-height:84px;font-family:inherit;}
+    .input-wrap{position:relative;}
+    .input-wrap .pfx{position:absolute;left:.9rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:1rem;pointer-events:none;}
+    .input-wrap input{padding-left:1.6rem;}
+    .search-wrap{position:relative;margin-bottom:.75rem;}
+    .search-wrap .ico-s{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);font-size:1rem;color:var(--muted);pointer-events:none;}
+    .search-wrap input{padding-left:2.4rem;}
+    .form-row{margin-bottom:.9rem;}
+    .btn{width:100%;padding:.95rem 1rem;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;transition:opacity .15s;}
+    .btn:active{opacity:.8;}
+    .btn:disabled{opacity:.45;cursor:default;}
+    .btn-primary{background:var(--accent);color:#fff;}
+    .btn-outline{background:#fff;color:var(--primary);border:1.5px solid var(--border);margin-top:.5rem;}
+    .btn-back{display:flex;align-items:center;gap:.3rem;background:none;border:none;color:var(--accent);font-size:.95rem;font-weight:600;cursor:pointer;padding:0;margin-bottom:1rem;}
+    .disc-group{display:flex;gap:.5rem;}
+    .disc-group button{flex:1;padding:.6rem .25rem;border:1.5px solid var(--border);border-radius:8px;background:#fff;font-size:.88rem;cursor:pointer;transition:all .15s;color:var(--primary);}
+    .disc-group button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;}
+    .radio-group{display:flex;flex-direction:column;gap:.5rem;}
+    .radio-opt{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:border-color .15s;}
+    .radio-opt input[type=radio],.radio-opt input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);flex-shrink:0;}
+    .radio-opt.on{border-color:var(--accent);background:#FFF8F5;}
+    .radio-opt .rl{font-size:.95rem;font-weight:600;}
+    .radio-opt .rsl{font-size:.8rem;color:var(--muted);margin-top:1px;}
+    .price-box{background:var(--green-bg);border:1.5px solid #95C9AB;border-radius:10px;padding:1rem;margin:.75rem 0;}
+    .price-box .big{font-size:1.6rem;font-weight:800;color:var(--green);}
+    .price-box .comis{font-size:.9rem;color:var(--green);margin-top:.1rem;}
+    .alert{background:#FFF3E0;border:1px solid #FFB74D;border-radius:8px;padding:.75rem 1rem;font-size:.85rem;margin-top:.6rem;}
+    .book-list{display:flex;flex-direction:column;gap:.45rem;}
+    .list-scroll{max-height:52vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+    .pill{display:inline-block;font-size:.65rem;font-weight:700;padding:.1rem .4rem;border-radius:4px;vertical-align:middle;margin-left:.3rem;}
+    .pill-local{background:#F0EDEB;color:#7C6F64;}
+    .pill-enc{background:#EDE7F6;color:#5E35B1;}
+    .stock-header{display:flex;justify-content:space-between;align-items:center;margin:1.25rem 0 .5rem;}
+    .stock-header .section-title{margin:0;}
+    .book-item{display:flex;align-items:center;padding:.75rem 1rem;background:#fff;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;gap:.75rem;transition:border-color .15s;}
+    .book-item:active{border-color:var(--accent);}
+    .book-info{flex:1;min-width:0;}
+    .book-title{font-weight:600;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .book-author{font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .book-isbn{font-size:.72rem;color:var(--muted);font-family:monospace;margin-top:1px;}
+    .badge{font-size:.68rem;font-weight:800;padding:.2rem .5rem;border-radius:5px;white-space:nowrap;flex-shrink:0;text-transform:uppercase;letter-spacing:.3px;}
+    .badge-c{background:#E3F2FD;color:#1565C0;}
+    .badge-f{background:#FFF3E0;color:#BF360C;}
+    .badge-d{background:#EDE7F6;color:#5E35B1;}
+    .badge-pend{background:#FFF8E1;color:#F57F17;}
+    .badge-paid{background:var(--green-bg);color:var(--green);}
+    .deuda-banner{background:#FFF3E0;border:1.5px solid #FFB74D;border-radius:10px;padding:.75rem 1rem;margin-bottom:.75rem;text-align:center;}
+    .deuda-banner .lbl{font-size:.72rem;font-weight:700;color:#BF360C;text-transform:uppercase;letter-spacing:.4px;}
+    .deuda-banner .val{font-size:1.15rem;font-weight:800;color:#BF360C;margin-top:2px;}
+    .divider{height:1px;background:var(--border);margin:1rem 0;}
+    .empty{text-align:center;padding:2rem 1rem;color:var(--muted);}
+    .empty .e{font-size:2.5rem;margin-bottom:.4rem;}
+    .loading{text-align:center;padding:2rem;color:var(--muted);font-size:.9rem;}
+    .success-wrap{text-align:center;padding:1.5rem .5rem;}
+    .success-wrap .big-ico{font-size:3rem;margin-bottom:.75rem;}
+    .success-wrap h2{margin-bottom:.25rem;}
+    .success-wrap p{color:var(--muted);font-size:.9rem;margin-bottom:1.5rem;}
+    .success-detail{background:var(--green-bg);border-radius:10px;padding:1rem;margin:1rem 0;text-align:left;}
+    .success-detail .row{display:flex;justify-content:space-between;padding:.25rem 0;font-size:.9rem;}
+    .success-detail .sep{border-top:1px solid #95C9AB;margin:.5rem 0;}
+    .venta-item{background:#fff;border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;margin-bottom:.45rem;display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;}
+    .venta-item .vi-left{flex:1;min-width:0;}
+    .venta-item .vi-title{font-weight:600;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .venta-item .vi-date{font-size:.78rem;color:var(--muted);}
+    .venta-item .vi-right{text-align:right;flex-shrink:0;}
+    .venta-item .vi-price{font-weight:700;font-size:.95rem;}
+    #toast{position:fixed;bottom:calc(var(--nav-h) + 1rem);left:50%;transform:translateX(-50%) translateY(120px);opacity:0;background:var(--primary);color:#fff;padding:.7rem 1.4rem;border-radius:100px;font-size:.88rem;z-index:999;transition:transform .28s ease,opacity .28s ease;white-space:nowrap;max-width:90vw;box-shadow:0 4px 12px rgba(0,0,0,.25);}
+    #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+    .pills-row{display:flex;gap:.5rem;overflow-x:auto;margin-bottom:1rem;padding-bottom:.25rem;-webkit-overflow-scrolling:touch;}
+    .pills-row::-webkit-scrollbar{display:none;}
+    .pill-stat{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:.6rem .9rem;min-width:110px;flex-shrink:0;text-align:center;box-shadow:var(--shadow);}
+    .pill-stat-val{font-size:1.05rem;font-weight:800;color:var(--accent);}
+    .pill-stat-label{font-size:.68rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-top:2px;}
+    .help-section{background:var(--card);border-radius:12px;margin-bottom:.75rem;box-shadow:var(--shadow);overflow:hidden;}
+    .help-hdr{display:flex;justify-content:space-between;align-items:center;padding:1rem;cursor:pointer;}
+    .help-hdr h3{font-size:.95rem;font-weight:700;margin:0;}
+    .help-hdr .arr{font-size:.9rem;color:var(--muted);transition:transform .2s;}
+    .help-hdr.open .arr{transform:rotate(180deg);}
+    .help-body{padding:0 1rem 1rem;font-size:.88rem;color:var(--primary);line-height:1.6;display:none;}
+    .help-body.open{display:block;}
+    .help-step{display:flex;gap:.6rem;margin-bottom:.5rem;}
+    .help-step .num{background:var(--accent);color:#fff;border-radius:50%;width:20px;height:20px;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+    .help-note{background:var(--green-bg);border-left:3px solid var(--green);border-radius:0 6px 6px 0;padding:.5rem .75rem;margin:.5rem 0;font-size:.83rem;color:#2D6A4F;}
+    .help-warn{background:#FFF3E0;border-left:3px solid #FFB74D;border-radius:0 6px 6px 0;padding:.5rem .75rem;margin:.5rem 0;font-size:.83rem;}
+  </style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <span class="brand">📚 Bookbuster</span>
+    <span class="cafe"><?= cafeName ?></span>
+  </header>
+  <main>
+    <!-- PANTALLA 1: VENTA -->
+    <section id="screen-venta" class="screen active">
+      <div id="sv-search">
+        <div class="search-wrap">
+          <span class="ico-s">🔍</span>
+          <input type="text" id="search-input" placeholder="Buscar por título o autor..." oninput="filterStock(this.value)" autocomplete="off">
+        </div>
+        <div id="stock-list" class="book-list list-scroll">
+          <div class="loading">Cargando libros...</div>
+        </div>
+        <div class="divider"></div>
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:.6rem">¿No está en la lista?</p>
+        <div class="form-row">
+          <span class="label">Título</span>
+          <input type="text" id="manual-titulo" placeholder="Nombre del libro" autocomplete="off">
+        </div>
+        <div class="form-row">
+          <span class="label">Autor</span>
+          <input type="text" id="manual-autor" placeholder="Nombre del autor" autocomplete="off">
+        </div>
+        <button class="btn btn-outline" onclick="selectManual()">Continuar con este libro →</button>
+      </div>
+      <div id="sv-form" style="display:none">
+        <button class="btn-back" onclick="volverBusqueda()">← Volver</button>
+        <div class="card" id="book-header"></div>
+        <div class="form-row">
+          <span class="label">PVP — consultá en Cúspide o Yenny</span>
+          <div class="input-wrap">
+            <span class="pfx">$</span>
+            <input type="number" id="pvp-input" placeholder="0" oninput="recalcular()" min="0" inputmode="numeric">
+          </div>
+        </div>
+        <div class="form-row">
+          <span class="label">Tipo de libro</span>
+          <div class="disc-group" style="flex-wrap: wrap;">
+            <button id="d0" class="on" onclick="setDescuento(0)">Nuevo</button>
+            <button id="d10" onclick="setDescuento(10)">Usado −10%</button>
+            <button id="d20" onclick="setDescuento(20)">Usado −20%</button>
+            <button id="d50" onclick="setDescuento(50)">Usado −50%</button>
+          </div>
+        </div>
+        <div class="form-row" id="personal-row">
+          <label class="radio-opt" id="opt-personal" onclick="togglePersonal()">
+            <input type="checkbox" id="chk-personal">
+            <div>
+              <div class="rl">🏷️ Precio empleados</div>
+              <div class="rsl">Sin comisión para el café — se transfiere todo a Bookbuster</div>
+            </div>
+          </label>
+        </div>
+        <div id="price-box" class="price-box" style="display:none">
+          <div class="big" id="pb-precio"></div>
+          <div class="comis" id="pb-comis"></div>
+        </div>
+        <div class="form-row">
+          <span class="label">¿Cómo pagó el cliente?</span>
+          <div class="radio-group">
+            <label class="radio-opt on" id="opt-bk" onclick="setTipoPago('transfer_bookbuster')">
+              <input type="radio" name="pago" value="transfer_bookbuster" checked>
+              <div>
+                <div class="rl">Transfirió a Bookbuster</div>
+                <div class="rsl">El cliente pagó directo a la cuenta de Bookbuster</div>
+              </div>
+            </label>
+            <label class="radio-opt" id="opt-cafe" onclick="setTipoPago('cafe')">
+              <input type="radio" name="pago" value="cafe">
+              <div>
+                <div class="rl">Me pagó a mí (efectivo o tarjeta)</div>
+                <div class="rsl">Vas a tener que transferirle el neto a Bookbuster</div>
+              </div>
+            </label>
+          </div>
+          <div id="cafe-nota" class="alert" style="display:none"></div>
+        </div>
+        <button class="btn btn-primary" id="btn-confirmar" onclick="confirmarVenta()" disabled>Confirmar venta</button>
+      </div>
+      <div id="sv-success" style="display:none">
+        <div class="success-wrap">
+          <div class="big-ico">✅</div>
+          <h2>¡Venta registrada!</h2>
+          <p id="success-msg">Bookbuster va a liquidarte la comisión en el día.</p>
+          <div class="success-detail" id="success-detail"></div>
+          <button class="btn btn-primary" onclick="resetVenta()">Registrar otra venta</button>
+        </div>
+      </div>
+    </section>
+    <!-- PANTALLA 2: ENCARGO -->
+    <section id="screen-encargo" class="screen">
+      <div id="enc-activos">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:.25rem">
+          <button onclick="refrescarEncargos()" style="background:none;border:none;color:var(--accent);font-size:.85rem;font-weight:600;cursor:pointer;padding:.25rem 0">↻ Actualizar</button>
+        </div>
+        <div id="enc-camino-wrap" style="display:none">
+          <p class="section-title">En camino</p>
+          <div id="enc-camino-list"></div>
+        </div>
+        <div id="enc-listos-wrap" style="display:none">
+          <p class="section-title">Listos para retirar</p>
+          <div id="enc-listos-list"></div>
+        </div>
+        <div id="enc-divider" class="divider" style="display:none"></div>
+        <p class="section-title" style="margin-top:0">Nuevo encargo</p>
+        <div id="enc-form">
+          <div class="form-row">
+            <span class="label">¿Qué libro necesita?</span>
+            <textarea id="enc-desc" placeholder="Título, autor, o cualquier detalle que tenga el cliente..."></textarea>
+          </div>
+          <div class="form-row">
+            <span class="label">Nombre del cliente</span>
+            <input type="text" id="enc-cliente" placeholder="Nombre y apellido" autocomplete="off">
+          </div>
+          <div class="form-row">
+            <span class="label">WhatsApp</span>
+            <input type="text" id="enc-wsp" placeholder="11 1234-5678" autocomplete="off" inputmode="tel">
+          </div>
+          <div class="form-row">
+            <span class="label">Notas (opcional)</span>
+            <input type="text" id="enc-notas" placeholder="Cualquier dato extra..." autocomplete="off">
+          </div>
+          <button class="btn btn-primary" id="btn-enc" onclick="submitEncargo()">📩 Enviar encargo a Bookbuster</button>
+        </div>
+        <div id="enc-success" style="display:none">
+          <div class="success-wrap">
+            <div class="big-ico">📩</div>
+            <h2>¡Encargo enviado!</h2>
+            <p>Bookbuster se pone en contacto con el cliente.</p>
+            <button class="btn btn-primary" onclick="resetEncargo()">Registrar otro encargo</button>
+          </div>
+        </div>
+      </div>
+      <div id="enc-checkout" style="display:none">
+        <button class="btn-back" onclick="volverDeCheckout()">← Volver</button>
+        <div class="card" id="enc-book-header"></div>
+        <div class="form-row">
+          <span class="label">PVP — consultá en Cúspide o Yenny</span>
+          <div class="input-wrap">
+            <span class="pfx">$</span>
+            <input type="number" id="enc-pvp" placeholder="0" oninput="recalcularEnc()" min="0" inputmode="numeric">
+          </div>
+        </div>
+        <div class="form-row">
+          <span class="label">Tipo de libro</span>
+          <div class="disc-group">
+            <button id="ed0" class="on" onclick="setDescuentoEnc(0)">Nuevo</button>
+            <button id="ed10" onclick="setDescuentoEnc(10)">Usado −10%</button>
+            <button id="ed20" onclick="setDescuentoEnc(20)">Usado −20%</button>
+          </div>
+        </div>
+        <div id="enc-price-box" class="price-box" style="display:none">
+          <div class="big" id="enc-pb-precio"></div>
+          <div class="comis" id="enc-pb-comis"></div>
+        </div>
+        <div class="form-row">
+          <span class="label">¿Cómo pagó el cliente?</span>
+          <div class="radio-group">
+            <label class="radio-opt on" id="enc-opt-bk" onclick="setTipoPagoEnc('transfer_bookbuster')">
+              <input type="radio" name="enc-pago" value="transfer_bookbuster" checked>
+              <div>
+                <div class="rl">Transfirió a Bookbuster</div>
+                <div class="rsl">El cliente pagó directo a la cuenta de Bookbuster</div>
+              </div>
+            </label>
+            <label class="radio-opt" id="enc-opt-cafe" onclick="setTipoPagoEnc('cafe')">
+              <input type="radio" name="enc-pago" value="cafe">
+              <div>
+                <div class="rl">Me pagó a mí (efectivo o tarjeta)</div>
+                <div class="rsl">Vas a tener que transferirle el neto a Bookbuster</div>
+              </div>
+            </label>
+          </div>
+          <div id="enc-cafe-nota" class="alert" style="display:none"></div>
+        </div>
+        <button class="btn btn-primary" id="enc-btn-checkout" onclick="confirmarVentaEncargo()" disabled>Confirmar entrega</button>
+      </div>
+      <div id="enc-checkout-success" style="display:none">
+        <div class="success-wrap">
+          <div class="big-ico">✅</div>
+          <h2>¡Encargo entregado!</h2>
+          <p>La venta quedó registrada.</p>
+          <div class="success-detail" id="enc-success-detail"></div>
+          <button class="btn btn-primary" onclick="resetCheckoutEncargo()">Volver</button>
+        </div>
+      </div>
+    </section>
+    <!-- PANTALLA 3: MIS LIBROS -->
+    <section id="screen-stock" class="screen">
+      <div class="deuda-banner" id="deuda-banner" style="display:none">
+        <div class="lbl">Total pendiente a transferir</div>
+        <div class="val" id="deuda-total">—</div>
+      </div>
+      <div class="pills-row" id="pills-resumen" style="display:none">
+        <div class="pill-stat">
+          <div class="pill-stat-val" id="pill-vendido">—</div>
+          <div class="pill-stat-label">Ventas acumuladas</div>
+        </div>
+        <div class="pill-stat">
+          <div class="pill-stat-val" id="pill-comision">—</div>
+          <div class="pill-stat-label">Comisiones acumuladas</div>
+        </div>
+      </div>
+      <div class="stock-header">
+        <p class="section-title" id="exhibicion-title">En exhibición</p>
+      </div>
+      <div id="stock-display" class="book-list list-scroll">
+        <div class="loading">Cargando...</div>
+      </div>
+      <div class="stock-header" style="margin-top:1.5rem">
+        <p class="section-title">Ventas registradas</p>
+        <span id="ventas-count" style="font-size:.78rem;font-weight:700;color:var(--accent)"></span>
+      </div>
+      <div id="ventas-display" class="list-scroll">
+        <div class="loading">Cargando...</div>
+      </div>
+    </section>
+    <!-- PANTALLA 4: AYUDA -->
+    <section id="screen-ayuda" class="screen">
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">Todo lo que necesitás saber para operar Bookbuster.</p>
+      <div class="help-section">
+        <div class="help-hdr" onclick="toggleHelp(this)">
+          <h3>💰 Registrar una venta</h3><span class="arr">▾</span>
+        </div>
+        <div class="help-body">
+          <div class="help-step"><div class="num">1</div><div>Buscá el libro por título o autor en la pantalla <strong>Venta</strong>.</div></div>
+          <div class="help-step"><div class="num">2</div><div>Si no aparece, usá el formulario de abajo con título y autor.</div></div>
+          <div class="help-step"><div class="num">3</div><div>Ingresá el <strong>PVP</strong> (precio de tapa). Consultalo en Cúspide o Yenny si no lo tenés.</div></div>
+          <div class="help-step"><div class="num">4</div><div>Elegí si el libro es <strong>Nuevo</strong> o <strong>Usado</strong> (−10/−20/−50%).</div></div>
+          <div class="help-step"><div class="num">5</div><div>Si es para consumo del café o del equipo, activá <strong>Precio empleados</strong>: se le suma un descuento extra (el mismo % de tu comisión habitual) y el pago se transfiere siempre completo a Bookbuster — no hay opción de "pagó el café". No aplica a libros Firme.</div></div>
+          <div class="help-step"><div class="num">6</div><div>Elegí cómo pagó el cliente (si no activaste Empleados) y confirmá.</div></div>
+          <div class="help-note"><strong>Consig</strong>: comisión del café 20% · <strong>Tuyo (firme)</strong>: comisión 30%, sin transferencia · <strong>Precio empleados</strong>: sin comisión para el café — ese % pasa a ser descuento extra, y se transfiere todo a Bookbuster</div>
+        </div>
+      </div>
+      <div class="help-section">
+        <div class="help-hdr" onclick="toggleHelp(this)">
+          <h3>📋 Gestionar un encargo</h3><span class="arr">▾</span>
+        </div>
+        <div class="help-body">
+          <div class="help-step"><div class="num">1</div><div>Un cliente pide un libro que no está → abrí la pantalla <strong>Encargo</strong> y completá el formulario.</div></div>
+          <div class="help-step"><div class="num">2</div><div>Bookbuster busca el libro y contacta al cliente.</div></div>
+          <div class="help-step"><div class="num">3</div><div>Cuando llega, aparece en <strong>En camino</strong> → tocá <em>Llegó</em> para confirmar la recepción.</div></div>
+          <div class="help-step"><div class="num">4</div><div>Cuando el cliente pasa a retirarlo, aparece en <strong>Listos para retirar</strong> → tocá <em>Cobrar</em> y completá la venta.</div></div>
+          <div class="help-warn">⚠️ Los encargos siempre tienen comisión del 30%.</div>
+        </div>
+      </div>
+      <div class="help-section">
+        <div class="help-hdr" onclick="toggleHelp(this)">
+          <h3>📚 Mis libros</h3><span class="arr">▾</span>
+        </div>
+        <div class="help-body">
+          <div class="help-step"><div class="num">1</div><div><strong>En exhibición</strong>: todos los libros de Bookbuster registrados en tu café.</div></div>
+          <div class="help-step"><div class="num">2</div><div><strong>Ventas registradas</strong>: historial de ventas con estado de comisión.</div></div>
+          <div class="help-note">✓ Verde = comisión liquidada &nbsp;·&nbsp; ⏳ Naranja = pendiente de pago</div>
+        </div>
+      </div>
+      <div class="help-section">
+        <div class="help-hdr" onclick="toggleHelp(this)">
+          <h3>❓ Consignación vs Firme</h3><span class="arr">▾</span>
+        </div>
+        <div class="help-body">
+          <p style="margin-bottom:.6rem"><strong>Consignación (Consig)</strong>: el libro es de Bookbuster. Si se vende, el café cobra y le transfiere el neto a Bookbuster. Comisión: 20%.</p>
+          <p><strong>Firme (Tuyo)</strong>: el café le compró el libro a Bookbuster con descuento. Cuando se vende, el café se queda con todo — sin transferencia. Comisión informativa: 30%.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+  <nav>
+    <button class="on" id="nav-venta" onclick="goScreen('venta',this)"><span class="ico">💰</span>Venta</button>
+    <button id="nav-encargo" onclick="goScreen('encargo',this)"><span class="ico">📋</span>Encargo</button>
+    <button id="nav-stock" onclick="goScreen('stock',this)"><span class="ico">📚</span>Mis libros</button>
+    <button id="nav-ayuda" onclick="goScreen('ayuda',this)"><span class="ico">❓</span>Ayuda</button>
+  </nav>
+</div>
+<div id="toast"></div>
+<script>
+const CAFE_ID='<?= cafeId ?>';
+const CAFE_NAME='<?= cafeName ?>';
+let stockData=[],ventasData=[],encargosActivos=[],selectedBook=null,descuento=0,tipoPago='transfer_bookbuster';
+let selectedEncargo=null,descuentoEnc=0,tipoPagoEnc='transfer_bookbuster';
+let _stockResults=[],_encargosListos=[],esPersonal=false;
+window.onload=loadData;
+function loadData(){
+  google.script.run.withSuccessHandler(function(d){stockData=d||[];renderStockList(stockData);renderStockDisplay(stockData);}).withFailureHandler(function(){toast('Error al cargar libros.');}).getStockCafe(CAFE_ID);
+  google.script.run.withSuccessHandler(function(d){ventasData=d||[];renderVentasDisplay(ventasData);}).withFailureHandler(function(){}).getVentasRecientes(CAFE_ID);
+  google.script.run.withSuccessHandler(function(d){encargosActivos=d||[];renderEncargosActivos(encargosActivos);}).withFailureHandler(function(){}).getEncargosActivos(CAFE_ID);
+  google.script.run.withSuccessHandler(renderDeudaBanner).withFailureHandler(function(){}).getDeudaPendienteCafe(CAFE_ID);
+}
+function renderDeudaBanner(total){
+  const el=document.getElementById('deuda-banner');
+  total=Number(total)||0;
+  if(total<=0){el.style.display='none';return;}
+  document.getElementById('deuda-total').textContent=fmt(total);
+  el.style.display='';
+}
+function goScreen(name,btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('on'));
+  document.getElementById('screen-'+name).classList.add('active');
+  btn.classList.add('on');
+}
+function filterStock(q){
+  if(!q.trim()){renderStockList(stockData);return;}
+  const s=q.toLowerCase();
+  renderStockList(stockData.filter(b=>(b.titulo||'').toLowerCase().includes(s)||(b.autor||'').toLowerCase().includes(s)||String(b.isbn||'').includes(s)));
+}
+function renderStockList(books){
+  _stockResults=books;
+  const el=document.getElementById('stock-list');
+  if(!books.length){el.innerHTML='<div class="empty"><div class="e">📭</div><p>No encontramos ese libro en tu stock.</p></div>';return;}
+  el.innerHTML=books.map((b,i)=>`<div class="book-item" onclick="selectBook(${i})"><div class="book-info"><div class="book-title">${x(b.titulo)}</div><div class="book-author">${x(b.autor)}</div>${b.isbn?`<div class="book-isbn">ISBN ${x(b.isbn)}</div>`:''}</div><span class="badge ${b.modalidad==='firme'?'badge-f':(b.modalidad==='donacion'?'badge-d':'badge-c')}">${b.modalidad==='firme'?'Tuyo':(b.modalidad==='donacion'?'Donación':'Consig')}</span></div>`).join('');
+}
+function selectBook(i){selectedBook=_stockResults[i];abrirFormVenta();}
+function selectManual(){
+  const titulo=document.getElementById('manual-titulo').value.trim();
+  if(!titulo){toast('Escribí el título del libro.');return;}
+  const autor=document.getElementById('manual-autor').value.trim();
+  selectedBook={titulo,autor,modalidad:'consignacion',id_ejemplar:'',isbn:''};
+  abrirFormVenta();
+}
+function abrirFormVenta(){
+  descuento=0;tipoPago='transfer_bookbuster';esPersonal=false;
+  const b=selectedBook;
+  document.getElementById('book-header').innerHTML=`<div style="font-weight:700;font-size:1.05rem;margin-bottom:.2rem">${x(b.titulo)}</div>${b.autor?`<div style="color:var(--muted);font-size:.88rem;margin-bottom:.4rem">${x(b.autor)}</div>`:''}<span class="badge ${b.modalidad==='firme'?'badge-f':(b.modalidad==='donacion'?'badge-d':'badge-c')}">${b.modalidad==='firme'?'Libro tuyo (firme) — comisión 30%':(b.modalidad==='donacion'?'Donación — comisión 20% del PVP':'Consignación — comisión 20%')}</span>`;
+  document.getElementById('pvp-input').value='';
+  document.getElementById('price-box').style.display='none';
+  document.getElementById('btn-confirmar').disabled=true;
+  document.getElementById('cafe-nota').style.display='none';
+  const esFirme=b.modalidad==='firme';
+  document.getElementById('opt-bk').style.display=esFirme?'none':'';
+  document.getElementById('opt-cafe').style.display='';
+  document.getElementById('opt-cafe').querySelector('.rsl').textContent=esFirme?'El café ya pagó el libro — no hay transferencia a Bookbuster':'Vas a tener que transferirle el neto a Bookbuster';
+  document.getElementById('chk-personal').checked=false;
+  document.getElementById('opt-personal').classList.remove('on');
+  document.getElementById('personal-row').style.display=esFirme?'none':'';
+  setDescuento(0,true);setTipoPago(esFirme?'cafe':'transfer_bookbuster',true);
+  document.getElementById('sv-search').style.display='none';
+  document.getElementById('sv-form').style.display='';
+  document.getElementById('sv-success').style.display='none';
+}
+function setDescuento(pct,silent){
+  descuento=pct;
+  ['d0','d10','d20','d50'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  document.getElementById('d'+pct).classList.add('on');
+  if(!silent)recalcular();
+}
+function togglePersonal(){
+  esPersonal=!esPersonal;
+  document.getElementById('opt-personal').classList.toggle('on',esPersonal);
+  document.getElementById('chk-personal').checked=esPersonal;
+  document.getElementById('opt-cafe').style.display=esPersonal?'none':'';
+  if(esPersonal)setTipoPago('transfer_bookbuster',true);
+  recalcular();
+}
+function calcularPrecioVenta_(pvp,desc,modalidad,personal){
+  const modPct=comPctPorModalidad_(modalidad);
+  const precioBase=Math.round(pvp*(1-desc/100));
+  const precio=personal?Math.round(precioBase*(1-modPct/100)):precioBase;
+  const comision=personal?0:Math.round(precio*modPct/100);
+  const descuentoEfectivoPct=pvp>0?Math.round((1-precio/pvp)*100):0;
+  return {precio,comision,comPct:modPct,descuentoEfectivoPct};
+}
+function setTipoPago(tipo,silent){
+  tipoPago=tipo;
+  document.getElementById('opt-bk').classList.toggle('on',tipo==='transfer_bookbuster');
+  document.getElementById('opt-cafe').classList.toggle('on',tipo==='cafe');
+  document.getElementById('opt-bk').querySelector('input').checked=tipo==='transfer_bookbuster';
+  document.getElementById('opt-cafe').querySelector('input').checked=tipo==='cafe';
+  if(!silent)recalcular();
+}
+function recalcular(){
+  const pvp=parseFloat(document.getElementById('pvp-input').value)||0;
+  const box=document.getElementById('price-box');
+  const btn=document.getElementById('btn-confirmar');
+  const nota=document.getElementById('cafe-nota');
+  if(pvp>0){
+    const {precio,comision,comPct}=calcularPrecioVenta_(pvp,descuento,selectedBook&&selectedBook.modalidad,esPersonal);
+    const neto=precio-comision;
+    box.style.display='';
+    document.getElementById('pb-precio').textContent='Precio de venta: '+fmt(precio);
+    document.getElementById('pb-comis').textContent=esPersonal?'Sin comisión para el café — se transfiere todo a Bookbuster':'Tu comisión: '+fmt(comision)+' ('+comPct+'%)';
+    btn.disabled=false;
+    if(tipoPago==='cafe'&&selectedBook.modalidad!=='firme'&&!esPersonal){nota.style.display='';nota.innerHTML='⚠️ Tenés que transferirle a Bookbuster: <strong>'+fmt(neto)+'</strong> (precio − comisión)';}
+    else{nota.style.display='none';}
+  } else {
+    box.style.display='none';btn.disabled=true;nota.style.display='none';
+  }
+}
+function confirmarVenta(){
+  const pvp=parseFloat(document.getElementById('pvp-input').value)||0;
+  if(!pvp){toast('Ingresá el precio del libro.');return;}
+  const {precio,comision,comPct,descuentoEfectivoPct}=calcularPrecioVenta_(pvp,descuento,selectedBook.modalidad,esPersonal);
+  const btn=document.getElementById('btn-confirmar');
+  btn.disabled=true;btn.textContent='Guardando...';
+  google.script.run.withSuccessHandler(function(res){
+    if(res.ok){mostrarExitoVenta(precio,comision,comPct);loadData();}
+    else{toast('Error: '+res.error);btn.disabled=false;btn.textContent='Confirmar venta';}
+  }).withFailureHandler(function(){
+    toast('Error al guardar. Intentá de nuevo.');btn.disabled=false;btn.textContent='Confirmar venta';
+  }).registrarVenta({cafeId:CAFE_ID,cafeName:CAFE_NAME,idEjemplar:selectedBook.id_ejemplar||selectedBook.id||'',titulo:selectedBook.titulo,autor:selectedBook.autor||'',pvp:pvp,descuentoPct:descuentoEfectivoPct,precioFinal:precio,tipoPago:tipoPago,modalidad:selectedBook.modalidad||'consignacion',tipoVenta:esPersonal?'personal':'local'});
+}
+function mostrarExitoVenta(precio,comision,comPct){
+  const neto=precio-comision;
+  let rows=`<div class="row"><span>${x(selectedBook.titulo)}</span></div><div class="sep"></div><div class="row"><span>Precio de venta</span><strong>${fmt(precio)}</strong></div>`;
+  rows+=esPersonal?`<div class="row"><span>Comisión café</span><strong>Sin comisión ($0)</strong></div>`:`<div class="row"><span>Tu comisión (${comPct}%)</span><strong>${fmt(comision)}</strong></div>`;
+  if(tipoPago==='cafe'&&selectedBook.modalidad!=='firme'&&!esPersonal)rows+=`<div class="sep"></div><div class="row"><span>⚠️ Transferir a Bookbuster</span><strong>${fmt(neto)}</strong></div>`;
+  document.getElementById('success-detail').innerHTML=rows;
+  document.getElementById('success-msg').textContent=esPersonal?'Precio empleados — se transfiere todo a Bookbuster, sin comisión para el café.':(selectedBook.modalidad==='firme'?'La comisión ya estaba saldada — no hay nada que transferir a Bookbuster.':'Bookbuster va a liquidarte la comisión en el día.');
+  document.getElementById('sv-form').style.display='none';
+  document.getElementById('sv-success').style.display='';
+}
+function volverBusqueda(){
+  selectedBook=null;
+  document.getElementById('sv-search').style.display='';
+  document.getElementById('sv-form').style.display='none';
+  document.getElementById('sv-success').style.display='none';
+  document.getElementById('search-input').value='';
+  document.getElementById('btn-confirmar').textContent='Confirmar venta';
+  renderStockList(stockData);
+}
+function resetVenta(){volverBusqueda();document.getElementById('manual-titulo').value='';document.getElementById('manual-autor').value='';}
+function submitEncargo(){
+  const desc=document.getElementById('enc-desc').value.trim();
+  const cliente=document.getElementById('enc-cliente').value.trim();
+  const wsp=document.getElementById('enc-wsp').value.trim();
+  const notas=document.getElementById('enc-notas').value.trim();
+  if(!desc){toast('Describí qué libro necesita el cliente.');return;}
+  if(!cliente){toast('Ingresá el nombre del cliente.');return;}
+  const btn=document.getElementById('btn-enc');
+  btn.disabled=true;btn.textContent='Enviando...';
+  google.script.run.withSuccessHandler(function(res){
+    if(res.ok){document.getElementById('enc-form').style.display='none';document.getElementById('enc-success').style.display='';}
+    else{toast('Error: '+res.error);btn.disabled=false;btn.textContent='📩 Enviar encargo a Bookbuster';}
+  }).withFailureHandler(function(){
+    toast('Error al enviar. Intentá de nuevo.');btn.disabled=false;btn.textContent='📩 Enviar encargo a Bookbuster';
+  }).registrarEncargo({cafeId:CAFE_ID,cafeName:CAFE_NAME,descripcion:desc,clienteNombre:cliente,clienteWhatsapp:wsp,notas});
+}
+function resetEncargo(){
+  ['enc-desc','enc-cliente','enc-wsp','enc-notas'].forEach(id=>document.getElementById(id).value='');
+  const btn=document.getElementById('btn-enc');btn.disabled=false;btn.textContent='📩 Enviar encargo a Bookbuster';
+  document.getElementById('enc-form').style.display='';document.getElementById('enc-success').style.display='none';
+}
+function renderStockDisplay(books){
+  const el=document.getElementById('stock-display');
+  const title=document.getElementById('exhibicion-title');
+  if(!books.length){
+    if(title)title.textContent='En exhibición';
+    el.innerHTML='<div class="empty"><div class="e">📭</div><p>Todavía no hay libros cargados.</p></div>';return;
+  }
+  if(title)title.textContent='En exhibición · '+books.length+' '+(books.length===1?'libro':'libros');
+  el.innerHTML=books.map(b=>`<div class="book-item" style="cursor:default"><div class="book-info"><div class="book-title">${x(b.titulo)}</div><div class="book-author">${x(b.autor)}${b.editorial?' · '+x(b.editorial):''}</div>${b.isbn?`<div class="book-isbn">ISBN ${x(b.isbn)}</div>`:''}</div><span class="badge ${b.modalidad==='firme'?'badge-f':(b.modalidad==='donacion'?'badge-d':'badge-c')}">${b.modalidad==='firme'?'Tuyo':(b.modalidad==='donacion'?'Donación':'Consig')}</span></div>`).join('');
+}
+function renderPills(ventas){
+  if(!ventas.length){document.getElementById('pills-resumen').style.display='none';return;}
+  const totalVendido=ventas.reduce((s,v)=>s+Math.round(Number(v.precio_final)||0),0);
+  const totalComision=ventas.reduce((s,v)=>s+Math.round(Number(v.comision_monto)||0),0);
+  document.getElementById('pill-vendido').textContent=fmt(totalVendido);
+  document.getElementById('pill-comision').textContent=fmt(totalComision);
+  document.getElementById('pills-resumen').style.display='flex';
+}
+function renderVentasDisplay(ventas){
+  const el=document.getElementById('ventas-display');
+  const countEl=document.getElementById('ventas-count');
+  renderPills(ventas);
+  if(!ventas.length){
+    if(countEl)countEl.textContent='';
+    el.innerHTML='<div class="empty"><p>Todavía no hay ventas registradas.</p></div>';return;
+  }
+  if(countEl)countEl.textContent=ventas.length+' en total';
+  el.innerHTML=ventas.slice(0,30).map(v=>{
+    const esEncargo=(v.tipo_venta||'local')==='encargo';
+    const pill=esEncargo?'<span class="pill pill-enc">Encargo</span>':'<span class="pill pill-local">Local</span>';
+    return `<div class="venta-item"><div class="vi-left"><div class="vi-title">${x(v.titulo)}</div><div class="vi-date">${fDate(v.fecha)}${pill}</div></div><div class="vi-right"><div class="vi-price">${fmt(v.precio_final)}</div>${v.estado_comision==='pagada'?`<span class="badge badge-paid">✓ ${fmt(v.comision_monto)}</span>`:`<span class="badge badge-pend">⏳ ${fmt(v.comision_monto)}</span>`}</div></div>`;
+  }).join('');
+}
+function fmt(n){n=Math.round(Number(n)||0);let s=n.toString(),r='';for(let i=0;i<s.length;i++){if(i>0&&(s.length-i)%3===0)r+='.';r+=s[i];}return '$ '+r;}
+function fDate(d){if(!d)return '';const dt=d instanceof Date?d:new Date(d);if(isNaN(dt))return String(d);return dt.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'});}
+function x(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function comPctPorModalidad_(modalidad){return modalidad==='firme'?30:(modalidad==='donacion'?40:20);}
+let _tt;function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),3200);}
+function toggleHelp(hdr){hdr.classList.toggle('open');hdr.nextElementSibling.classList.toggle('open');}
+
+
+// ── Encargos activos ─────────────────────────────────────────────
+function renderEncargosActivos(enc){
+  const camino=enc.filter(e=>e.estado==='gestionado');
+  const listos=enc.filter(e=>e.estado==='recibido');
+  const caminoWrap=document.getElementById('enc-camino-wrap');
+  const listosWrap=document.getElementById('enc-listos-wrap');
+  const divider=document.getElementById('enc-divider');
+  caminoWrap.style.display=camino.length?'':'none';
+  listosWrap.style.display=listos.length?'':'none';
+  divider.style.display=(camino.length||listos.length)?'':'none';
+  document.getElementById('enc-camino-list').innerHTML=camino.map(e=>`
+    <div class="venta-item" style="flex-direction:column;gap:.5rem;margin-bottom:.45rem">
+      <div class="vi-left"><div class="vi-title">${x(e.titulo)}</div><div class="vi-date">${fDate(e.fecha)}</div></div>
+      <button class="btn btn-outline" style="padding:.55rem;font-size:.88rem" onclick="confirmarLlegada('${e.id}',this)">✓ Llegó</button>
+    </div>`).join('');
+  _encargosListos=listos;
+  document.getElementById('enc-listos-list').innerHTML=listos.map((e,i)=>`
+    <div class="card" style="margin-bottom:.5rem">
+      <div style="font-weight:700;margin-bottom:.3rem">${x(e.titulo)}</div>
+      <div style="font-size:.85rem;color:var(--muted)">👤 ${x(e.cliente_nombre)}</div>
+      ${e.cliente_whatsapp?`<div style="font-size:.82rem;color:var(--accent);margin-top:2px">📱 ${x(e.cliente_whatsapp)}</div>`:''}
+      <button class="btn btn-primary" style="margin-top:.75rem" onclick="abrirCheckoutEncargo(${i})">Cobrar →</button>
+    </div>`).join('');
+}
+function refrescarEncargos(){
+  google.script.run
+    .withSuccessHandler(function(d){encargosActivos=d||[];renderEncargosActivos(encargosActivos);toast('✓ Encargos actualizados.');})
+    .withFailureHandler(function(){toast('Error al actualizar.');})
+    .getEncargosActivos(CAFE_ID);
+}
+function confirmarLlegada(encargoId,btn){
+  btn.disabled=true;btn.textContent='Guardando...';
+  google.script.run.withSuccessHandler(function(res){
+    if(res.ok){toast('✓ Recibido. Avisamos a Bookbuster.');loadData();}
+    else{toast('Error: '+res.error);btn.disabled=false;btn.textContent='✓ Llegó';}
+  }).withFailureHandler(function(){
+    toast('Error al guardar.');btn.disabled=false;btn.textContent='✓ Llegó';
+  }).confirmarRecepcion(encargoId);
+}
+
+
+// ── Checkout encargo ─────────────────────────────────────────────
+function abrirCheckoutEncargo(i){
+  const enc=_encargosListos[i];
+  selectedEncargo=enc;descuentoEnc=0;tipoPagoEnc='transfer_bookbuster';
+  document.getElementById('enc-book-header').innerHTML=`
+    <div style="font-weight:700;font-size:1.05rem;margin-bottom:.2rem">${x(enc.titulo)}</div>
+    ${enc.autor?`<div style="color:var(--muted);font-size:.88rem;margin-bottom:.4rem">${x(enc.autor)}</div>`:''}
+    <div style="font-size:.85rem;color:var(--muted)">👤 ${x(enc.cliente_nombre)}${enc.cliente_whatsapp?' · <span style="color:var(--accent)">'+x(enc.cliente_whatsapp)+'</span>':''}</div>
+    <span class="badge badge-f" style="margin-top:.4rem;display:inline-block">Firme — comisión 30%</span>`;
+  document.getElementById('enc-pvp').value='';
+  document.getElementById('enc-price-box').style.display='none';
+  document.getElementById('enc-btn-checkout').disabled=true;
+  document.getElementById('enc-cafe-nota').style.display='none';
+  setDescuentoEnc(0,true);setTipoPagoEnc('transfer_bookbuster',true);
+  document.getElementById('enc-activos').style.display='none';
+  document.getElementById('enc-checkout').style.display='';
+  document.getElementById('enc-checkout-success').style.display='none';
+}
+function volverDeCheckout(){
+  document.getElementById('enc-activos').style.display='';
+  document.getElementById('enc-checkout').style.display='none';
+  selectedEncargo=null;
+}
+function setDescuentoEnc(pct,silent){
+  descuentoEnc=pct;
+  ['ed0','ed10','ed20'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  document.getElementById('ed'+pct).classList.add('on');
+  if(!silent)recalcularEnc();
+}
+function setTipoPagoEnc(tipo,silent){
+  tipoPagoEnc=tipo;
+  document.getElementById('enc-opt-bk').classList.toggle('on',tipo==='transfer_bookbuster');
+  document.getElementById('enc-opt-cafe').classList.toggle('on',tipo==='cafe');
+  document.getElementById('enc-opt-bk').querySelector('input').checked=tipo==='transfer_bookbuster';
+  document.getElementById('enc-opt-cafe').querySelector('input').checked=tipo==='cafe';
+  if(!silent)recalcularEnc();
+}
+function recalcularEnc(){
+  const pvp=parseFloat(document.getElementById('enc-pvp').value)||0;
+  const precio=Math.round(pvp*(1-descuentoEnc/100));
+  const comision=Math.round(precio*0.3);
+  const neto=precio-comision;
+  const box=document.getElementById('enc-price-box');
+  const btn=document.getElementById('enc-btn-checkout');
+  const nota=document.getElementById('enc-cafe-nota');
+  if(pvp>0){
+    box.style.display='';
+    document.getElementById('enc-pb-precio').textContent='Precio de venta: '+fmt(precio);
+    document.getElementById('enc-pb-comis').textContent='Tu comisión: '+fmt(comision)+' (30%)';
+    btn.disabled=false;
+    if(tipoPagoEnc==='cafe'){nota.style.display='';nota.innerHTML='⚠️ Tenés que transferirle a Bookbuster: <strong>'+fmt(neto)+'</strong> (precio − comisión del 30%)';}
+    else{nota.style.display='none';}
+  } else {
+    box.style.display='none';btn.disabled=true;nota.style.display='none';
+  }
+}
+function confirmarVentaEncargo(){
+  const pvp=parseFloat(document.getElementById('enc-pvp').value)||0;
+  if(!pvp){toast('Ingresá el precio del libro.');return;}
+  const precio=Math.round(pvp*(1-descuentoEnc/100));
+  const comision=Math.round(precio*0.3);
+  const btn=document.getElementById('enc-btn-checkout');
+  btn.disabled=true;btn.textContent='Guardando...';
+  google.script.run.withSuccessHandler(function(res){
+    if(res.ok){
+      const neto=precio-comision;
+      let rows=`<div class="row"><span>${x(selectedEncargo.titulo)}</span></div><div class="sep"></div><div class="row"><span>Precio de venta</span><strong>${fmt(precio)}</strong></div><div class="row"><span>Tu comisión (30%)</span><strong>${fmt(comision)}</strong></div>`;
+      if(tipoPagoEnc==='cafe')rows+=`<div class="sep"></div><div class="row"><span>⚠️ Transferir a Bookbuster</span><strong>${fmt(neto)}</strong></div>`;
+      document.getElementById('enc-success-detail').innerHTML=rows;
+      document.getElementById('enc-checkout').style.display='none';
+      document.getElementById('enc-checkout-success').style.display='';
+      loadData();
+    } else {
+      toast('Error: '+res.error);btn.disabled=false;btn.textContent='Confirmar entrega';
+    }
+  }).withFailureHandler(function(){
+    toast('Error al guardar.');btn.disabled=false;btn.textContent='Confirmar entrega';
+  }).registrarVentaEncargo({
+    cafeId:     CAFE_ID,
+    cafeName:   CAFE_NAME,
+    encargoId:  selectedEncargo.id,
+    idEjemplar: selectedEncargo.id_ejemplar||'',
+    titulo:     selectedEncargo.titulo,
+    autor:      selectedEncargo.autor||'',
+    pvp:        pvp,
+    descuentoPct: descuentoEnc,
+    precioFinal:  precio,
+    tipoPago:   tipoPagoEnc
+  });
+}
+function resetCheckoutEncargo(){
+  selectedEncargo=null;
+  document.getElementById('enc-checkout-success').style.display='none';
+  document.getElementById('enc-activos').style.display='';
+  document.getElementById('enc-btn-checkout').textContent='Confirmar entrega';
+}
+</script>
+</body>
+</html>
