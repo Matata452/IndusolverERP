@@ -2,57 +2,69 @@
 <meta name="description" content="Prototipo del catálogo público de un café Bookbuster, para enlazar desde una píldora en Webflow.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wdth,wght@8..144,25..151,100..1000&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#FAF7F2;
+    --bg:#FFFFFF;
     --surface:#FFFFFF;
-    --ink:#2C1810;
-    --muted:#8A7364;
-    --accent:#8B4513;
-    --accent-ink:#FFF8F2;
-    --line:#E6DDD0;
-    --good:#2D6A4F;
-    --good-bg:#EAF4EE;
-    --spine-1:#8B4513;
-    --spine-2:#5E7A6B;
-    --spine-3:#B0562F;
-    --spine-4:#6B5B95;
-    --spine-5:#9A8248;
+    --ink:#000000;
+    --muted:#6C6E82;
+    --accent:#5767F6;
+    --accent-ink:#FFFFFF;
+    --cta:#F96215;
+    --cta-ink:#FFFFFF;
+    --line:#E7E7F0;
+    --highlight:#FBFF1F;
+    --highlight-ink:#000000;
+    --error:#F8271C;
+    --error-bg:#FDEAE8;
+    --spine-1:#5767F6;
+    --spine-2:#F96215;
+    --spine-3:#F8271C;
+    --spine-4:#F8A9F8;
+    --spine-5:#FBFF1F;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
-      --bg:#1C1410;
-      --surface:#261D17;
-      --ink:#F2E9DD;
-      --muted:#B29B89;
-      --accent:#E0985C;
-      --accent-ink:#241505;
-      --line:#3C2E24;
-      --good:#8FCBA8;
-      --good-bg:#1E3129;
-      --spine-1:#E0985C;
-      --spine-2:#8FB3A0;
-      --spine-3:#E08A5C;
-      --spine-4:#A79BD1;
-      --spine-5:#C9B27E;
+      --bg:#0A0A0F;
+      --surface:#15151F;
+      --ink:#FFFFFF;
+      --muted:#9A9CB5;
+      --accent:#8B96FF;
+      --accent-ink:#0A0A0F;
+      --cta:#FF8A4D;
+      --cta-ink:#0A0A0F;
+      --line:#2A2A38;
+      --highlight:#FBFF1F;
+      --highlight-ink:#000000;
+      --error:#FF6B60;
+      --error-bg:#3A1815;
+      --spine-1:#8B96FF;
+      --spine-2:#FF8A4D;
+      --spine-3:#FF6B60;
+      --spine-4:#F8A9F8;
+      --spine-5:#FBFF1F;
     }
   }
   :root[data-theme="dark"]{
-    --bg:#1C1410;
-    --surface:#261D17;
-    --ink:#F2E9DD;
-    --muted:#B29B89;
-    --accent:#E0985C;
-    --accent-ink:#241505;
-    --line:#3C2E24;
-    --good:#8FCBA8;
-    --good-bg:#1E3129;
-    --spine-1:#E0985C;
-    --spine-2:#8FB3A0;
-    --spine-3:#E08A5C;
-    --spine-4:#A79BD1;
-    --spine-5:#C9B27E;
+    --bg:#0A0A0F;
+    --surface:#15151F;
+    --ink:#FFFFFF;
+    --muted:#9A9CB5;
+    --accent:#8B96FF;
+    --accent-ink:#0A0A0F;
+    --cta:#FF8A4D;
+    --cta-ink:#0A0A0F;
+    --line:#2A2A38;
+    --highlight:#FBFF1F;
+    --highlight-ink:#000000;
+    --error:#FF6B60;
+    --error-bg:#3A1815;
+    --spine-1:#8B96FF;
+    --spine-2:#FF8A4D;
+    --spine-3:#FF6B60;
+    --spine-4:#F8A9F8;
+    --spine-5:#FBFF1F;
   }
 
   *,*::before,*::after{box-sizing:border-box;}
@@ -60,7 +72,8 @@
     margin:0;
     background:var(--bg);
     color:var(--ink);
-    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-family:'Roboto Flex',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-optical-sizing:auto;
     padding-inline:16px;
     padding-block:20px 40px;
   }
@@ -77,23 +90,28 @@
 
   header.cafe{margin-bottom:22px;}
   .kicker{
-    font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;
-    color:var(--accent);margin-bottom:6px;
+    display:inline-block;
+    font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em;
+    color:var(--highlight-ink);background:var(--highlight);
+    padding:2px 8px;border-radius:4px;margin-bottom:10px;
   }
   h1{
-    font-family:'Fraunces',Georgia,serif;
-    font-optical-sizing:auto;
-    font-weight:600;
-    font-size:clamp(1.7rem,5vw,2.3rem);
-    line-height:1.12;
-    margin:0 0 8px;
+    font-family:'Roboto Flex',sans-serif;
+    font-weight:800;
+    font-variation-settings:'wght' 800,'wdth' 92,'opsz' 144;
+    text-transform:uppercase;
+    font-size:clamp(1.9rem,7vw,2.7rem);
+    line-height:1.02;
+    letter-spacing:-.01em;
+    margin:0 0 10px;
+    color:var(--accent);
     text-wrap:balance;
   }
   .cafe-meta{
     display:flex;flex-wrap:wrap;align-items:center;gap:10px;
-    color:var(--muted);font-size:.88rem;
+    color:var(--muted);font-size:.88rem;font-weight:500;
   }
-  .cafe-meta .count strong{color:var(--ink);font-variant-numeric:tabular-nums;}
+  .cafe-meta .count strong{color:var(--ink);font-weight:800;font-variant-numeric:tabular-nums;}
   .dot{width:3px;height:3px;border-radius:50%;background:var(--muted);flex-shrink:0;}
 
   .controls{
@@ -111,24 +129,23 @@
     width:100%;padding:10px 12px 10px 36px;
     border:1.5px solid var(--line);border-radius:10px;
     background:var(--surface);color:var(--ink);
-    font-size:.92rem;font-family:inherit;
+    font-size:.92rem;font-family:inherit;font-weight:500;
   }
   input[type=search]:focus{outline:2px solid var(--accent);outline-offset:1px;}
-  input[type=search]::placeholder{color:var(--muted);}
+  input[type=search]::placeholder{color:var(--muted);font-weight:400;}
 
   select{
     border:1.5px solid var(--line);border-radius:10px;
     background:var(--surface);color:var(--ink);
-    font-size:.85rem;font-family:inherit;font-weight:500;
+    font-size:.85rem;font-family:inherit;font-weight:600;
     padding:0 30px 0 12px;
     appearance:none;-webkit-appearance:none;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238A7364' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
     background-repeat:no-repeat;background-position:right 12px center;
   }
   select:focus{outline:2px solid var(--accent);outline-offset:1px;}
 
   #count-line{
-    font-size:.82rem;color:var(--muted);margin-bottom:12px;
+    font-size:.82rem;color:var(--muted);margin-bottom:12px;font-weight:600;
     font-variant-numeric:tabular-nums;
   }
 
@@ -140,19 +157,19 @@
   .book{
     background:var(--surface);
     border:1px solid var(--line);
-    border-left:4px solid var(--spine-1);
+    border-left:5px solid var(--spine-1);
     border-radius:8px;
     padding:12px 14px;
     display:flex;flex-direction:column;gap:2px;
   }
   .book .titulo{
-    font-family:'Fraunces',Georgia,serif;
-    font-weight:500;font-style:italic;
-    font-size:1.02rem;line-height:1.28;
+    font-family:'Roboto Flex',sans-serif;
+    font-weight:700;font-variation-settings:'wght' 700;
+    font-size:1rem;line-height:1.28;
     text-wrap:balance;
   }
-  .book .autor{font-size:.86rem;font-weight:600;color:var(--ink);}
-  .book .editorial{font-size:.78rem;color:var(--muted);}
+  .book .autor{font-size:.86rem;font-weight:600;color:var(--accent);}
+  .book .editorial{font-size:.78rem;color:var(--muted);font-weight:500;}
 
   #empty{display:none;text-align:center;padding:48px 16px;color:var(--muted);}
   #empty .e{font-size:2rem;margin-bottom:8px;}
@@ -162,21 +179,21 @@
     display:flex;justify-content:space-between;align-items:center;gap:12px;
     flex-wrap:wrap;
   }
-  footer p{margin:0;font-size:.8rem;color:var(--muted);max-width:38ch;}
+  footer p{margin:0;font-size:.8rem;color:var(--muted);font-weight:500;max-width:38ch;}
   .powered{
-    font-size:.74rem;color:var(--muted);white-space:nowrap;
+    font-size:.74rem;color:var(--muted);white-space:nowrap;font-weight:500;
     display:flex;align-items:center;gap:5px;
   }
-  .powered b{color:var(--ink);font-family:'Fraunces',Georgia,serif;font-style:italic;}
+  .powered b{color:var(--accent);font-weight:800;}
 
   .fab{
     position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));
     display:inline-flex;align-items:center;gap:8px;
-    background:var(--accent);color:var(--accent-ink);
+    background:var(--cta);color:var(--cta-ink);
     border:none;border-radius:100px;
     padding:13px 18px 13px 15px;
-    font-family:inherit;font-size:.9rem;font-weight:700;
-    box-shadow:0 6px 18px rgba(0,0,0,.18);
+    font-family:inherit;font-size:.9rem;font-weight:800;
+    box-shadow:0 6px 18px rgba(0,0,0,.22);
     cursor:pointer;z-index:20;
   }
   .fab:active{opacity:.85;}
@@ -192,14 +209,16 @@
   @media (min-width:520px){
     dialog{border-radius:14px;margin:auto;}
   }
-  dialog::backdrop{background:rgba(28,20,16,.45);}
+  dialog::backdrop{background:rgba(0,0,0,.5);}
   .sheet{padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));}
   .sheet-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:4px;}
   .sheet-head h2{
-    font-family:'Fraunces',Georgia,serif;font-weight:600;font-style:italic;
-    font-size:1.3rem;margin:0;
+    font-family:'Roboto Flex',sans-serif;font-weight:800;
+    font-variation-settings:'wght' 800;
+    text-transform:uppercase;
+    font-size:1.25rem;margin:0;color:var(--accent);
   }
-  .sheet-head p{margin:4px 0 0;font-size:.85rem;color:var(--muted);}
+  .sheet-head p{margin:4px 0 0;font-size:.85rem;color:var(--muted);font-weight:500;}
   .x-btn{
     background:none;border:none;color:var(--muted);font-size:1.3rem;line-height:1;
     cursor:pointer;padding:2px 4px;flex-shrink:0;
@@ -208,28 +227,27 @@
   .field label{display:block;font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
   .field textarea,.field input[type=text],.field input[type=tel]{
     width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;
-    background:var(--bg);color:var(--ink);font-size:.92rem;font-family:inherit;
+    background:var(--bg);color:var(--ink);font-size:.92rem;font-family:inherit;font-weight:500;
   }
   .field textarea{min-height:72px;resize:vertical;}
   .field textarea:focus,.field input:focus{outline:2px solid var(--accent);outline-offset:1px;}
   .sheet-err{
-    display:none;margin-top:12px;font-size:.82rem;color:#B3261E;
-    background:#FCEBEA;border:1px solid #F3C6C2;border-radius:8px;padding:8px 10px;
+    display:none;margin-top:12px;font-size:.82rem;font-weight:600;color:var(--error);
+    background:var(--error-bg);border:1px solid var(--error);border-radius:8px;padding:8px 10px;
   }
-  :root:not([data-theme="light"]) .sheet-err{background:#3A1F1C;border-color:#5C332D;color:#F3B5AE;}
   .sheet-submit{
     width:100%;margin-top:16px;padding:12px;border:none;border-radius:10px;
-    background:var(--accent);color:var(--accent-ink);font-size:.95rem;font-weight:700;
+    background:var(--cta);color:var(--cta-ink);font-size:.95rem;font-weight:800;
     font-family:inherit;cursor:pointer;
   }
   .sheet-submit:disabled{opacity:.55;cursor:default;}
   .sheet-ok{display:none;text-align:center;padding:8px 4px 4px;}
   .sheet-ok .ico{font-size:2.2rem;margin-bottom:6px;}
-  .sheet-ok p{margin:0;font-size:.92rem;color:var(--good);font-weight:600;}
+  .sheet-ok p{margin:0;font-size:.92rem;color:var(--accent);font-weight:700;}
   .sheet-ok .close-ok{
     margin-top:16px;width:100%;padding:11px;border-radius:10px;
     border:1.5px solid var(--line);background:none;color:var(--ink);
-    font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;
+    font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;
   }
 </style>
 
@@ -238,7 +256,7 @@
   <span class="preview-pill">Vista previa — datos de ejemplo</span>
 
   <header class="cafe">
-    <div class="kicker">Catálogo Bookbuster</div>
+    <span class="kicker">Catálogo Bookbuster</span>
     <h1>Café de la Esquina</h1>
     <div class="cafe-meta">
       <span class="count"><strong id="total-count">0</strong> libros disponibles hoy</span>
