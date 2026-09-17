@@ -43,7 +43,9 @@ function abrirGestionarEncargo() {
 
 
 function doGet(e) {
-  const slug = ((e && e.parameter && e.parameter.cafe) || '').toLowerCase().trim();
+  const params = (e && e.parameter) || {};
+  const esCatalogo = !!params.catalogo;
+  const slug = (esCatalogo ? params.catalogo : (params.cafe || '')).toLowerCase().trim();
   const cafe = slug ? getCafeBySlug_(slug) : null;
 
 
@@ -56,13 +58,13 @@ function doGet(e) {
   }
 
 
-  const tmpl = HtmlService.createTemplateFromFile('index');
+  const tmpl = HtmlService.createTemplateFromFile(esCatalogo ? 'catalogo' : 'index');
   tmpl.cafeName = cafe.nombre;
   tmpl.cafeId   = String(cafe.id);
 
 
   return tmpl.evaluate()
-    .setTitle('Bookbuster · ' + cafe.nombre)
+    .setTitle((esCatalogo ? 'Catálogo · ' : 'Bookbuster · ') + cafe.nombre)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
 }
 
@@ -73,6 +75,23 @@ function getStockCafe(cafeId) {
          r.ubicacion === 'en_cafe' &&
          !r.id_encargo
   );
+}
+
+
+// Para el catálogo público: solo lo que un visitante debería ver.
+// Sin modalidad, costo_firme ni ningún otro dato interno del negocio.
+function getStockPublico(cafeId) {
+  return getRows_('Stock')
+    .filter(r =>
+      String(r.id_cafe) === String(cafeId) &&
+      r.ubicacion === 'en_cafe' &&
+      !r.id_encargo
+    )
+    .map(r => ({
+      titulo:    String(r.titulo    || ''),
+      autor:     String(r.autor     || ''),
+      editorial: String(r.editorial || '')
+    }));
 }
 
 

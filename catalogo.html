@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Catálogo · Bookbuster</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAF7F2;
+    --surface:#FFFFFF;
+    --ink:#2C1810;
+    --muted:#8A7364;
+    --accent:#8B4513;
+    --accent-ink:#FFF8F2;
+    --line:#E6DDD0;
+    --good:#2D6A4F;
+    --good-bg:#EAF4EE;
+    --spine-1:#8B4513;
+    --spine-2:#5E7A6B;
+    --spine-3:#B0562F;
+    --spine-4:#6B5B95;
+    --spine-5:#9A8248;
+  }
+  *,*::before,*::after{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    padding-inline:16px;
+    padding-block:20px 40px;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+
+  header.cafe{margin-bottom:22px;}
+  .kicker{
+    font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;
+    color:var(--accent);margin-bottom:6px;
+  }
+  h1{
+    font-family:'Fraunces',Georgia,serif;
+    font-optical-sizing:auto;
+    font-weight:600;
+    font-size:clamp(1.7rem,5vw,2.3rem);
+    line-height:1.12;
+    margin:0 0 8px;
+    text-wrap:balance;
+  }
+  .cafe-meta{
+    display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+    color:var(--muted);font-size:.88rem;
+  }
+  .cafe-meta .count strong{color:var(--ink);font-variant-numeric:tabular-nums;}
+  .dot{width:3px;height:3px;border-radius:50%;background:var(--muted);flex-shrink:0;}
+
+  .controls{
+    display:flex;gap:8px;margin:18px 0 20px;
+    position:sticky;top:0;
+    padding-block:8px;background:var(--bg);
+    z-index:5;
+  }
+  .search-wrap{position:relative;flex:1;min-width:0;}
+  .search-wrap svg{
+    position:absolute;left:12px;top:50%;transform:translateY(-50%);
+    width:16px;height:16px;color:var(--muted);pointer-events:none;
+  }
+  input[type=search]{
+    width:100%;padding:10px 12px 10px 36px;
+    border:1.5px solid var(--line);border-radius:10px;
+    background:var(--surface);color:var(--ink);
+    font-size:.92rem;font-family:inherit;
+  }
+  input[type=search]:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  input[type=search]::placeholder{color:var(--muted);}
+
+  select{
+    border:1.5px solid var(--line);border-radius:10px;
+    background:var(--surface);color:var(--ink);
+    font-size:.85rem;font-family:inherit;font-weight:500;
+    padding:0 30px 0 12px;
+    appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238A7364' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 12px center;
+  }
+  select:focus{outline:2px solid var(--accent);outline-offset:1px;}
+
+  #count-line{
+    font-size:.82rem;color:var(--muted);margin-bottom:12px;
+    font-variant-numeric:tabular-nums;
+  }
+
+  #grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+    gap:10px;
+  }
+  .book{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-left:4px solid var(--spine-1);
+    border-radius:8px;
+    padding:12px 14px;
+    display:flex;flex-direction:column;gap:2px;
+  }
+  .book .titulo{
+    font-family:'Fraunces',Georgia,serif;
+    font-weight:500;font-style:italic;
+    font-size:1.02rem;line-height:1.28;
+    text-wrap:balance;
+  }
+  .book .autor{font-size:.86rem;font-weight:600;color:var(--ink);}
+  .book .editorial{font-size:.78rem;color:var(--muted);}
+
+  #empty{display:none;text-align:center;padding:48px 16px;color:var(--muted);}
+  #empty .e{font-size:2rem;margin-bottom:8px;}
+  .loading{text-align:center;padding:48px 16px;color:var(--muted);font-size:.9rem;}
+
+  footer{
+    margin-top:36px;padding-top:18px;border-top:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    flex-wrap:wrap;
+  }
+  footer p{margin:0;font-size:.8rem;color:var(--muted);max-width:38ch;}
+  .powered{
+    font-size:.74rem;color:var(--muted);white-space:nowrap;
+    display:flex;align-items:center;gap:5px;
+  }
+  .powered b{color:var(--ink);font-family:'Fraunces',Georgia,serif;font-style:italic;}
+
+  .fab{
+    position:fixed;right:16px;bottom:16px;
+    display:inline-flex;align-items:center;gap:8px;
+    background:var(--accent);color:var(--accent-ink);
+    border:none;border-radius:100px;
+    padding:13px 18px 13px 15px;
+    font-family:inherit;font-size:.9rem;font-weight:700;
+    box-shadow:0 6px 18px rgba(0,0,0,.18);
+    cursor:pointer;z-index:20;
+  }
+  .fab:active{opacity:.85;}
+  .fab svg{width:18px;height:18px;flex-shrink:0;}
+
+  dialog{
+    border:none;border-radius:14px 14px 0 0;
+    padding:0;margin:auto 0 0;
+    width:100%;max-width:460px;
+    background:var(--surface);color:var(--ink);
+    box-shadow:0 -8px 30px rgba(0,0,0,.2);
+  }
+  @media (min-width:520px){
+    dialog{border-radius:14px;margin:auto;}
+  }
+  dialog::backdrop{background:rgba(28,20,16,.45);}
+  .sheet{padding:18px;}
+  .sheet-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:4px;}
+  .sheet-head h2{
+    font-family:'Fraunces',Georgia,serif;font-weight:600;font-style:italic;
+    font-size:1.3rem;margin:0;
+  }
+  .sheet-head p{margin:4px 0 0;font-size:.85rem;color:var(--muted);}
+  .x-btn{
+    background:none;border:none;color:var(--muted);font-size:1.3rem;line-height:1;
+    cursor:pointer;padding:2px 4px;flex-shrink:0;
+  }
+  .field{margin-top:14px;}
+  .field label{display:block;font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+  .field textarea,.field input[type=text],.field input[type=tel]{
+    width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;
+    background:var(--bg);color:var(--ink);font-size:.92rem;font-family:inherit;
+  }
+  .field textarea{min-height:72px;resize:vertical;}
+  .field textarea:focus,.field input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .sheet-err{
+    display:none;margin-top:12px;font-size:.82rem;color:#B3261E;
+    background:#FCEBEA;border:1px solid #F3C6C2;border-radius:8px;padding:8px 10px;
+  }
+  .sheet-submit{
+    width:100%;margin-top:16px;padding:12px;border:none;border-radius:10px;
+    background:var(--accent);color:var(--accent-ink);font-size:.95rem;font-weight:700;
+    font-family:inherit;cursor:pointer;
+  }
+  .sheet-submit:disabled{opacity:.55;cursor:default;}
+  .sheet-ok{display:none;text-align:center;padding:8px 4px 4px;}
+  .sheet-ok .ico{font-size:2.2rem;margin-bottom:6px;}
+  .sheet-ok p{margin:0;font-size:.92rem;color:var(--good);font-weight:600;}
+  .sheet-ok .close-ok{
+    margin-top:16px;width:100%;padding:11px;border-radius:10px;
+    border:1.5px solid var(--line);background:none;color:var(--ink);
+    font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="cafe">
+    <div class="kicker">Catálogo Bookbuster</div>
+    <h1><?= cafeName ?></h1>
+    <div class="cafe-meta">
+      <span class="count"><strong id="total-count">—</strong> libros disponibles hoy</span>
+      <span class="dot"></span>
+      <span>Actualizado en el momento</span>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="search" id="q" placeholder="Buscar por título o autor…" autocomplete="off">
+    </div>
+    <select id="sort">
+      <option value="autor">Por autor</option>
+      <option value="titulo">Por título</option>
+    </select>
+  </div>
+
+  <p id="count-line"></p>
+
+  <div id="grid"><div class="loading">Cargando catálogo...</div></div>
+
+  <div id="empty">
+    <div class="e">📭</div>
+    <p>No encontramos ningún libro con eso.</p>
+  </div>
+
+  <footer>
+    <p>¿Buscás algo que no está en la lista? Tocá el botón de abajo y Bookbuster te lo consigue.</p>
+    <span class="powered">Catálogo por <b>Bookbuster</b></span>
+  </footer>
+
+</div>
+
+<button class="fab" id="fab-encargo">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 8-16 8 4-8-4-8z"/></svg>
+  Pedir un libro
+</button>
+
+<dialog id="dlg-encargo">
+  <div class="sheet">
+    <form id="form-encargo">
+      <div class="sheet-head">
+        <div>
+          <h2>Pedir un libro</h2>
+          <p>Se lo pasamos directo a Bookbuster.</p>
+        </div>
+        <button type="button" class="x-btn" id="btn-close-x" aria-label="Cerrar">✕</button>
+      </div>
+
+      <div class="field">
+        <label for="f-desc">¿Qué libro necesitás?</label>
+        <textarea id="f-desc" placeholder="Título, autor, o cualquier detalle que tengas..." required></textarea>
+      </div>
+      <div class="field">
+        <label for="f-nombre">Tu nombre</label>
+        <input type="text" id="f-nombre" placeholder="Nombre y apellido" autocomplete="off" required>
+      </div>
+      <div class="field">
+        <label for="f-wsp">WhatsApp (opcional)</label>
+        <input type="tel" id="f-wsp" placeholder="11 1234-5678" autocomplete="off" inputmode="tel">
+      </div>
+
+      <div class="sheet-err" id="sheet-err"></div>
+
+      <button type="submit" class="sheet-submit" id="btn-submit">📩 Enviar pedido</button>
+    </form>
+
+    <div class="sheet-ok" id="sheet-ok">
+      <div class="ico">✅</div>
+      <p>¡Pedido enviado! Bookbuster se va a contactar apenas lo tenga.</p>
+      <button class="close-ok" id="btn-close-ok">Cerrar</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  const CAFE_ID   = '<?= cafeId ?>';
+  const CAFE_NAME = '<?= cafeName ?>';
+
+  let LIBROS = [];
+  const SPINES = ['var(--spine-1)','var(--spine-2)','var(--spine-3)','var(--spine-4)','var(--spine-5)'];
+
+  const grid   = document.getElementById('grid');
+  const qEl    = document.getElementById('q');
+  const sortEl = document.getElementById('sort');
+  const empty  = document.getElementById('empty');
+  const countLine = document.getElementById('count-line');
+
+  window.onload = function(){
+    google.script.run
+      .withSuccessHandler(function(data){
+        LIBROS = data || [];
+        document.getElementById('total-count').textContent = LIBROS.length;
+        render();
+      })
+      .withFailureHandler(function(){
+        grid.innerHTML = '<div class="loading">No pudimos cargar el catálogo. Recargá la página.</div>';
+      })
+      .getStockPublico(CAFE_ID);
+  };
+
+  function apellido(autor){
+    const partes = autor.trim().split(' ');
+    return partes[partes.length - 1].toLowerCase();
+  }
+
+  function x(s){
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function render(){
+    const q = qEl.value.trim().toLowerCase();
+    const modo = sortEl.value;
+
+    let filtrados = LIBROS.filter(b =>
+      b.titulo.toLowerCase().includes(q) || b.autor.toLowerCase().includes(q)
+    );
+
+    filtrados = filtrados.slice().sort((a, b) => {
+      if (modo === 'titulo') return a.titulo.localeCompare(b.titulo, 'es');
+      return apellido(a.autor).localeCompare(apellido(b.autor), 'es');
+    });
+
+    countLine.textContent = q
+      ? filtrados.length + ' resultado' + (filtrados.length !== 1 ? 's' : '')
+      : '';
+
+    if (!filtrados.length){
+      grid.hidden = true;
+      empty.style.display = '';
+      return;
+    }
+    grid.hidden = false;
+    empty.style.display = 'none';
+
+    grid.innerHTML = filtrados.map((b, i) => `
+      <div class="book" style="border-left-color:${SPINES[i % SPINES.length]}">
+        <div class="titulo">${x(b.titulo)}</div>
+        <div class="autor">${x(b.autor)}</div>
+        ${b.editorial ? `<div class="editorial">${x(b.editorial)}</div>` : ''}
+      </div>`).join('');
+  }
+
+  qEl.addEventListener('input', render);
+  sortEl.addEventListener('change', render);
+
+  // ── Encargo ─────────────────────────────────────────────────────
+  const dlg      = document.getElementById('dlg-encargo');
+  const form     = document.getElementById('form-encargo');
+  const sheetErr = document.getElementById('sheet-err');
+  const sheetOk  = document.getElementById('sheet-ok');
+  const btnSubmit = document.getElementById('btn-submit');
+
+  function abrirEncargo(){
+    form.hidden = false;
+    sheetOk.style.display = 'none';
+    sheetErr.style.display = 'none';
+    dlg.showModal();
+  }
+  function cerrarEncargo(){ dlg.close(); }
+
+  document.getElementById('fab-encargo').addEventListener('click', abrirEncargo);
+  document.getElementById('btn-close-x').addEventListener('click', cerrarEncargo);
+  document.getElementById('btn-close-ok').addEventListener('click', cerrarEncargo);
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) cerrarEncargo(); });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const desc   = document.getElementById('f-desc').value.trim();
+    const nombre = document.getElementById('f-nombre').value.trim();
+    const wsp    = document.getElementById('f-wsp').value.trim();
+
+    if (!desc)   { sheetErr.textContent = 'Contanos qué libro buscás.'; sheetErr.style.display = ''; return; }
+    if (!nombre) { sheetErr.textContent = 'Ingresá tu nombre.'; sheetErr.style.display = ''; return; }
+    sheetErr.style.display = 'none';
+
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Enviando...';
+
+    google.script.run
+      .withSuccessHandler(function(res){
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = '📩 Enviar pedido';
+        if (!res.ok){
+          sheetErr.textContent = 'Error: ' + res.error;
+          sheetErr.style.display = '';
+          return;
+        }
+        form.hidden = true;
+        sheetOk.style.display = '';
+        form.reset();
+      })
+      .withFailureHandler(function(){
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = '📩 Enviar pedido';
+        sheetErr.textContent = 'Error al enviar. Intentá de nuevo.';
+        sheetErr.style.display = '';
+      })
+      .registrarEncargo({
+        cafeId:          CAFE_ID,
+        cafeName:        CAFE_NAME,
+        descripcion:     desc,
+        clienteNombre:   nombre,
+        clienteWhatsapp: wsp,
+        notas:           '',
+        canal:           'web'
+      });
+  });
+</script>
+</body>
+</html>
