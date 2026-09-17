@@ -394,8 +394,11 @@
   render();
 
   // ── Encargo (mock — acá la versión real llamaría a
-  //    google.script.run.registrarEncargo(...), la misma función que
-  //    ya usa el café y que ya notifica por Telegram) ────────────────
+  //    google.script.run.registrarEncargo({..., canal:'web'}), la misma
+  //    función que ya usa el café. El canal queda guardado en Encargos y
+  //    se arrastra a Ventas al entregarse, para poder diferenciar
+  //    comisiones por origen a futuro; y ya notifica por Telegram
+  //    marcando "Encargo desde el catálogo web". ─────────────────────
   const dlg      = document.getElementById('dlg-encargo');
   const form     = document.getElementById('form-encargo');
   const sheetErr = document.getElementById('sheet-err');

@@ -162,7 +162,8 @@ function registrarEncargo(payload) {
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(10000)) return { ok: false, error: 'Sistema ocupado, intentá de nuevo.' };
   try {
-    const id = newId_('E');
+    const id    = newId_('E');
+    const canal = payload.canal === 'web' ? 'web' : 'cafe';
 
 
     appendRow_('Encargos', {
@@ -174,12 +175,13 @@ function registrarEncargo(payload) {
       cliente_nombre:   payload.clienteNombre,
       cliente_whatsapp: payload.clienteWhatsapp || '',
       notas:            payload.notas || '',
-      estado:           'pendiente'
+      estado:           'pendiente',
+      canal:            canal
     });
 
 
     notificarTelegram_(
-      '📋 <b>Nuevo encargo</b>\n' +
+      (canal === 'web' ? '📱 <b>Encargo desde el catálogo web</b>\n' : '📋 <b>Nuevo encargo</b>\n') +
       '☕ Café: ' + payload.cafeName + '\n' +
       '📚 Libro: ' + payload.descripcion + '\n' +
       (payload.clienteNombre   ? '👤 Cliente: '  + payload.clienteNombre   + '\n' : '') +
@@ -213,13 +215,13 @@ function setupSheet() {
     'Ventas': [
       'id', 'fecha', 'id_cafe', 'cafe', 'id_ejemplar', 'titulo', 'autor',
       'pvp', 'descuento_pct', 'precio_final', 'tipo_pago', 'modalidad',
-      'comision_pct', 'comision_monto', 'tipo_venta', 'estado_comision',
+      'comision_pct', 'comision_monto', 'tipo_venta', 'canal', 'estado_comision',
       'fecha_pago_comision', 'notas',
       'deuda_monto', 'deuda_estado', 'donante_nombre', 'donante_telefono'
     ],
     'Encargos': [
       'id', 'fecha', 'id_cafe', 'cafe', 'descripcion',
-      'cliente_nombre', 'cliente_whatsapp', 'notas', 'estado'
+      'cliente_nombre', 'cliente_whatsapp', 'notas', 'estado', 'canal'
     ]
   };
 
@@ -251,7 +253,9 @@ function setupSheet() {
   setDropdown_('Ventas',   'modalidad',        ['consignacion', 'firme', 'donacion']);
   setDropdown_('Ventas',   'estado_comision',  ['pendiente', 'pagada']);
   setDropdown_('Ventas',   'deuda_estado',     ['pendiente', 'pagada']);
+  setDropdown_('Ventas',   'canal',            ['cafe', 'web']);
   setDropdown_('Encargos', 'estado',           ['pendiente', 'gestionado', 'recibido', 'entregado']);
+  setDropdown_('Encargos', 'canal',            ['cafe', 'web']);
 
 
   const cafesSheet = SS.getSheetByName('Cafés');
@@ -409,6 +413,20 @@ function migrarDonacionYDeuda() {
 }
 
 
+// ── Migración segura: agrega la columna "canal" (cafe / web) a Encargos
+// y Ventas, para poder diferenciar a futuro comisiones por origen del
+// pedido. Correr UNA sola vez desde el editor de Apps Script.
+function migrarCanalEncargo() {
+  agregarColumnasFaltantes_('Encargos', ['canal']);
+  agregarColumnasFaltantes_('Ventas',   ['canal']);
+
+  setDropdown_('Encargos', 'canal', ['cafe', 'web']);
+  setDropdown_('Ventas',   'canal', ['cafe', 'web']);
+
+  SpreadsheetApp.getUi().alert('✅ Listo', 'Se agregó la columna "canal" (cafe / web) a Encargos y Ventas. No se borró ningún dato existente.', SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+
 function agregarColumnasFaltantes_(sheetName, columnas) {
   const sh = SS.getSheetByName(sheetName);
   if (!sh) return;
@@ -507,12 +525,17 @@ function registrarVentaEncargo(payload) {
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(10000)) return { ok: false, error: 'Sistema ocupado.' };
   try {
+    // TODO: cuando se definan comisiones distintas por canal, ramificar
+    // acá según `canal` (hoy 30% para cafe y web por igual).
     const comisionPct   = 30;
     const comisionMonto = Math.round(payload.precioFinal * comisionPct / 100);
     const id            = newId_('V');
 
     const deudaAplica = payload.tipoPago === 'cafe';
     const deudaMonto   = deudaAplica ? (payload.precioFinal - comisionMonto) : 0;
+
+    const encargo = getRows_('Encargos').find(r => String(r.id) === String(payload.encargoId));
+    const canal   = encargo && encargo.canal === 'web' ? 'web' : 'cafe';
 
     appendRow_('Ventas', {
       id,
@@ -530,6 +553,7 @@ function registrarVentaEncargo(payload) {
       comision_pct:        comisionPct,
       comision_monto:      comisionMonto,
       tipo_venta:          'encargo',
+      canal:               canal,
       estado_comision:     'pendiente',
       fecha_pago_comision: '',
       notas:               '',
@@ -542,6 +566,7 @@ function registrarVentaEncargo(payload) {
     setEncargoEstado_(payload.encargoId, 'entregado');
     notificarTelegram_(
       '🎉 <b>Encargo entregado</b>\n' +
+      (canal === 'web' ? '📱 Origen: Catálogo web\n' : '') +
       '☕ Café: ' + payload.cafeName + '\n' +
       '📚 ' + payload.titulo + (payload.autor ? ' — ' + payload.autor : '') + '\n' +
       '💵 Precio final: $' + payload.precioFinal +
