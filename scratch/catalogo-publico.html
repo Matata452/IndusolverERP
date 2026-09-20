@@ -99,6 +99,18 @@
   .cafe-meta .count strong{color:var(--ink);font-weight:800;font-variant-numeric:tabular-nums;}
   .dot{width:3px;height:3px;border-radius:50%;background:var(--muted);flex-shrink:0;}
 
+  .capabilities{
+    display:grid;grid-template-columns:1fr 1fr;gap:12px 10px;
+    margin:0 0 22px;
+  }
+  .cap{display:flex;gap:8px;align-items:flex-start;}
+  .cap-ico{
+    width:30px;height:30px;border-radius:8px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:1rem;
+  }
+  .cap-title{font-size:.82rem;font-weight:800;line-height:1.2;}
+  .cap-desc{font-size:.72rem;color:var(--muted);line-height:1.3;font-weight:500;margin-top:1px;}
+
   .controls{
     display:flex;gap:8px;margin:18px 0 20px;
     position:sticky;top:env(safe-area-inset-top,0px);
@@ -199,18 +211,23 @@
   }
   .powered b{color:var(--accent);font-weight:800;}
 
-  .fab{
-    position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));
-    display:inline-flex;align-items:center;gap:8px;
-    background:var(--cta);color:var(--cta-ink);
-    border:none;border-radius:100px;
-    padding:13px 18px 13px 15px;
-    font-family:inherit;font-size:.9rem;font-weight:800;
-    box-shadow:0 6px 18px rgba(0,0,0,.22);
-    cursor:pointer;z-index:20;
+  .actions{
+    display:grid;grid-template-columns:1fr 1fr;gap:8px;
+    margin:28px 0 6px;
   }
-  .fab:active{opacity:.85;}
-  .fab svg{width:18px;height:18px;flex-shrink:0;}
+  .action-btn{
+    display:flex;align-items:center;justify-content:center;gap:7px;
+    border:none;border-radius:10px;padding:13px 10px;
+    font-family:inherit;font-size:.85rem;font-weight:800;
+    text-align:center;text-decoration:none;cursor:pointer;
+    box-shadow:0 3px 10px rgba(0,0,0,.1);
+  }
+  .action-btn:active{opacity:.85;}
+  .ig-link{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    font-size:.85rem;font-weight:700;color:var(--ink);
+    text-decoration:none;padding:12px;margin-bottom:6px;
+  }
 
   dialog{
     border:none;border-radius:14px 14px 0 0;
@@ -278,6 +295,37 @@
     </div>
   </header>
 
+  <div class="capabilities">
+    <div class="cap">
+      <span class="cap-ico" style="background:#5767F6">📖</span>
+      <div>
+        <div class="cap-title">Leé acá</div>
+        <div class="cap-desc">Sentate con cualquier libro del catálogo.</div>
+      </div>
+    </div>
+    <div class="cap">
+      <span class="cap-ico" style="background:#F96215">🛒</span>
+      <div>
+        <div class="cap-title">Comprá</div>
+        <div class="cap-desc">Llevate a casa el que más te guste.</div>
+      </div>
+    </div>
+    <div class="cap">
+      <span class="cap-ico" style="background:#FBFF1F">📩</span>
+      <div>
+        <div class="cap-title">Encargá</div>
+        <div class="cap-desc">¿No está? Te avisamos cuando llegue.</div>
+      </div>
+    </div>
+    <div class="cap">
+      <span class="cap-ico" style="background:#F8A9F8">💰</span>
+      <div>
+        <div class="cap-title">Vendé tus libros</div>
+        <div class="cap-desc">Traé los que ya leíste a este café.</div>
+      </div>
+    </div>
+  </div>
+
   <div class="controls">
     <div class="search-wrap">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
@@ -300,31 +348,34 @@
     <p>No encontramos ningún libro con eso.</p>
   </div>
 
+  <div class="actions">
+    <button type="button" class="action-btn" id="btn-pedir" style="background:var(--accent);color:var(--accent-ink)">📩 Pedir un libro</button>
+    <button type="button" class="action-btn" id="btn-vender" style="background:var(--cta);color:var(--cta-ink)">💰 Vender mis libros</button>
+    <button type="button" class="action-btn" id="btn-hablar" style="background:#000;color:#fff">💬 Hablar con Bookbuster</button>
+    <a class="action-btn" href="?catalogo=todos" style="background:var(--highlight);color:var(--highlight-ink)">📚 Ver todas las librerías</a>
+  </div>
+
+  <a class="ig-link" href="https://www.instagram.com/bookbuster.club/" target="_blank" rel="noopener">📸 Seguinos en Instagram</a>
+
   <footer>
-    <p>¿Buscás algo que no está en la lista? Tocá el botón de abajo y Bookbuster te lo consigue.</p>
     <span class="powered">Catálogo por <b>Bookbuster</b></span>
   </footer>
 
 </div>
-
-<button class="fab" id="fab-encargo">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 8-16 8 4-8-4-8z"/></svg>
-  Pedir un libro
-</button>
 
 <dialog id="dlg-encargo">
   <div class="sheet">
     <form id="form-encargo">
       <div class="sheet-head">
         <div>
-          <h2>Pedir un libro</h2>
-          <p>Se lo pasamos directo a Bookbuster.</p>
+          <h2 id="enc-titulo">Pedir un libro</h2>
+          <p id="enc-sub">Se lo pasamos directo a Bookbuster.</p>
         </div>
         <button type="button" class="x-btn" id="btn-close-x" aria-label="Cerrar">✕</button>
       </div>
 
       <div class="field">
-        <label for="f-desc">¿Qué libro necesitás?</label>
+        <label for="f-desc" id="enc-label">¿Qué libro necesitás?</label>
         <textarea id="f-desc" placeholder="Título, autor, o cualquier detalle que tengas..." required></textarea>
       </div>
       <div class="field">
@@ -343,8 +394,45 @@
 
     <div class="sheet-ok" id="sheet-ok">
       <div class="ico">✅</div>
-      <p>¡Pedido enviado! Bookbuster se va a contactar apenas lo tenga.</p>
+      <p id="enc-ok-msg">¡Pedido enviado! Bookbuster se va a contactar apenas lo tenga.</p>
       <button class="close-ok" id="btn-close-ok">Cerrar</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dlg-contacto">
+  <div class="sheet">
+    <form id="form-contacto">
+      <div class="sheet-head">
+        <div>
+          <h2>Hablar con Bookbuster</h2>
+          <p>Te leemos y te contactamos si hace falta.</p>
+        </div>
+        <button type="button" class="x-btn" id="btn-close-x2" aria-label="Cerrar">✕</button>
+      </div>
+
+      <div class="field">
+        <label for="c-msg">Tu mensaje</label>
+        <textarea id="c-msg" placeholder="Contanos qué necesitás..." required></textarea>
+      </div>
+      <div class="field">
+        <label for="c-nombre">Tu nombre</label>
+        <input type="text" id="c-nombre" placeholder="Nombre y apellido" autocomplete="off" required>
+      </div>
+      <div class="field">
+        <label for="c-wsp">WhatsApp (opcional)</label>
+        <input type="tel" id="c-wsp" placeholder="11 1234-5678" autocomplete="off" inputmode="tel">
+      </div>
+
+      <div class="sheet-err" id="sheet-err2"></div>
+
+      <button type="submit" class="sheet-submit" id="btn-submit2" style="background:#000">💬 Enviar mensaje</button>
+    </form>
+
+    <div class="sheet-ok" id="sheet-ok2">
+      <div class="ico">✅</div>
+      <p>¡Mensaje enviado! Bookbuster te lee y te contacta si hace falta.</p>
+      <button class="close-ok" id="btn-close-ok2">Cerrar</button>
     </div>
   </div>
 </dialog>
@@ -479,19 +567,37 @@
   sortEl.addEventListener('change', render);
   render();
 
-  // ── Encargo (mock — acá la versión real llamaría a
-  //    google.script.run.registrarEncargo({..., canal:'web'}), la misma
-  //    función que ya usa el café. El canal queda guardado en Encargos y
-  //    se arrastra a Ventas al entregarse, para poder diferenciar
-  //    comisiones por origen a futuro; y ya notifica por Telegram
-  //    marcando "Encargo desde el catálogo web". ─────────────────────
+  // ── Pedir / Vender (mock — la versión real llama a registrarEncargo con
+  //    canal:'web' y tipo:'compra'|'venta', que ya notifica por Telegram
+  //    distinguiendo cada caso) ────────────────────────────────────────
+  const COPY_ENCARGO = {
+    compra: {
+      titulo: 'Pedir un libro', sub: 'Se lo pasamos directo a Bookbuster.',
+      label: '¿Qué libro necesitás?', placeholder: 'Título, autor, o cualquier detalle que tengas...',
+      btn: '📩 Enviar pedido', ok: '¡Pedido enviado! Bookbuster se va a contactar apenas lo tenga.'
+    },
+    venta: {
+      titulo: 'Vender tus libros', sub: 'Te contactamos por WhatsApp para coordinar.',
+      label: '¿Qué libros querés vender?', placeholder: 'Pasanos título y autor de todos los que quieras...',
+      btn: '💰 Enviar', ok: '¡Listo! Bookbuster te contacta por WhatsApp para coordinar.'
+    }
+  };
+
   const dlg      = document.getElementById('dlg-encargo');
   const form     = document.getElementById('form-encargo');
   const sheetErr = document.getElementById('sheet-err');
   const sheetOk  = document.getElementById('sheet-ok');
   const btnSubmit = document.getElementById('btn-submit');
+  let modoEncargo = 'compra';
 
-  function abrirEncargo(){
+  function abrirEncargo(modo){
+    modoEncargo = modo;
+    const c = COPY_ENCARGO[modo];
+    document.getElementById('enc-titulo').textContent = c.titulo;
+    document.getElementById('enc-sub').textContent     = c.sub;
+    document.getElementById('enc-label').textContent   = c.label;
+    document.getElementById('f-desc').placeholder      = c.placeholder;
+    btnSubmit.textContent = c.btn;
     form.hidden = false;
     sheetOk.style.display = 'none';
     sheetErr.style.display = 'none';
@@ -499,33 +605,73 @@
   }
   function cerrarEncargo(){ dlg.close(); }
 
-  document.getElementById('fab-encargo').addEventListener('click', abrirEncargo);
+  document.getElementById('btn-pedir').addEventListener('click', () => abrirEncargo('compra'));
+  document.getElementById('btn-vender').addEventListener('click', () => abrirEncargo('venta'));
   document.getElementById('btn-close-x').addEventListener('click', cerrarEncargo);
   document.getElementById('btn-close-ok').addEventListener('click', cerrarEncargo);
   dlg.addEventListener('click', (e) => { if (e.target === dlg) cerrarEncargo(); });
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
+    const c      = COPY_ENCARGO[modoEncargo];
     const desc   = document.getElementById('f-desc').value.trim();
     const nombre = document.getElementById('f-nombre').value.trim();
-    const wsp    = document.getElementById('f-wsp').value.trim();
 
-    if (!desc)   { sheetErr.textContent = 'Contanos qué libro buscás.'; sheetErr.style.display = ''; return; }
+    if (!desc)   { sheetErr.textContent = 'Contanos qué libro(s) buscás.'; sheetErr.style.display = ''; return; }
     if (!nombre) { sheetErr.textContent = 'Ingresá tu nombre.'; sheetErr.style.display = ''; return; }
     sheetErr.style.display = 'none';
 
     btnSubmit.disabled = true;
     btnSubmit.textContent = 'Enviando...';
 
-    // Simulación — la versión real dispara registrarEncargo(cafeId, cafeName,
-    // desc, nombre, wsp, notas), que ya envía el mensaje a Telegram tal cual
-    // lo hace hoy el encargo desde la app del café.
     setTimeout(() => {
       btnSubmit.disabled = false;
-      btnSubmit.textContent = '📩 Enviar pedido';
+      btnSubmit.textContent = c.btn;
+      document.getElementById('enc-ok-msg').textContent = c.ok;
       form.hidden = true;
       sheetOk.style.display = '';
       form.reset();
+    }, 600);
+  });
+
+  // ── Hablar con Bookbuster (mock) ────────────────────────────────────
+  const dlg2      = document.getElementById('dlg-contacto');
+  const form2     = document.getElementById('form-contacto');
+  const sheetErr2 = document.getElementById('sheet-err2');
+  const sheetOk2  = document.getElementById('sheet-ok2');
+  const btnSubmit2 = document.getElementById('btn-submit2');
+
+  function abrirContacto(){
+    form2.hidden = false;
+    sheetOk2.style.display = 'none';
+    sheetErr2.style.display = 'none';
+    dlg2.showModal();
+  }
+  function cerrarContacto(){ dlg2.close(); }
+
+  document.getElementById('btn-hablar').addEventListener('click', abrirContacto);
+  document.getElementById('btn-close-x2').addEventListener('click', cerrarContacto);
+  document.getElementById('btn-close-ok2').addEventListener('click', cerrarContacto);
+  dlg2.addEventListener('click', (e) => { if (e.target === dlg2) cerrarContacto(); });
+
+  form2.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const msg    = document.getElementById('c-msg').value.trim();
+    const nombre = document.getElementById('c-nombre').value.trim();
+
+    if (!msg)    { sheetErr2.textContent = 'Escribí tu mensaje.'; sheetErr2.style.display = ''; return; }
+    if (!nombre) { sheetErr2.textContent = 'Ingresá tu nombre.'; sheetErr2.style.display = ''; return; }
+    sheetErr2.style.display = 'none';
+
+    btnSubmit2.disabled = true;
+    btnSubmit2.textContent = 'Enviando...';
+
+    setTimeout(() => {
+      btnSubmit2.disabled = false;
+      btnSubmit2.textContent = '💬 Enviar mensaje';
+      form2.hidden = true;
+      sheetOk2.style.display = '';
+      form2.reset();
     }, 600);
   });
 </script>

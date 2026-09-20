@@ -56,9 +56,23 @@ function abrirGestionarEncargo() {
 
 
 function doGet(e) {
-  const params = (e && e.parameter) || {};
-  const esCatalogo = !!params.catalogo;
-  const slug = (esCatalogo ? params.catalogo : (params.cafe || '')).toLowerCase().trim();
+  const params   = (e && e.parameter) || {};
+  const catParam = (params.catalogo || '').toLowerCase().trim();
+
+
+  if (catParam === 'todos') {
+    const tmpl = HtmlService.createTemplateFromFile('catalogo');
+    tmpl.cafeName   = 'Todas las librerías';
+    tmpl.cafeId     = '';
+    tmpl.modoTodos  = true;
+    return tmpl.evaluate()
+      .setTitle('Catálogo · Todas las librerías')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
+  }
+
+
+  const esCatalogo = !!catParam;
+  const slug = esCatalogo ? catParam : (params.cafe || '').toLowerCase().trim();
   const cafe = slug ? getCafeBySlug_(slug) : null;
 
 
@@ -72,8 +86,9 @@ function doGet(e) {
 
 
   const tmpl = HtmlService.createTemplateFromFile(esCatalogo ? 'catalogo' : 'index');
-  tmpl.cafeName = cafe.nombre;
-  tmpl.cafeId   = String(cafe.id);
+  tmpl.cafeName  = cafe.nombre;
+  tmpl.cafeId    = String(cafe.id);
+  tmpl.modoTodos = false;
 
 
   return tmpl.evaluate()
@@ -106,6 +121,32 @@ function getStockPublico(cafeId) {
       autor:     String(r.autor     || ''),
       editorial: String(r.editorial || ''),
       genero:    String(r.genero    || '')
+    }));
+}
+
+
+// Catálogo público combinado: stock de todos los cafés activos juntos,
+// con el nombre del café para poder filtrar en el frontend.
+function getStockPublicoTodos() {
+  const cafesPorId = {};
+  getRows_('Cafés')
+    .filter(c => String(c.activo).toLowerCase() === 'true')
+    .forEach(c => { cafesPorId[String(c.id)] = String(c.nombre); });
+
+
+  return getRows_('Stock')
+    .filter(r =>
+      r.ubicacion === 'en_cafe' &&
+      !r.id_encargo &&
+      cafesPorId[String(r.id_cafe)]
+    )
+    .map(r => ({
+      isbn:      String(r.isbn      || ''),
+      titulo:    String(r.titulo    || ''),
+      autor:     String(r.autor     || ''),
+      editorial: String(r.editorial || ''),
+      genero:    String(r.genero    || ''),
+      cafe:      cafesPorId[String(r.id_cafe)]
     }));
 }
 
@@ -198,6 +239,7 @@ function registrarEncargo(payload) {
   try {
     const id    = newId_('E');
     const canal = payload.canal === 'web' ? 'web' : 'cafe';
+    const tipo  = ['compra', 'venta', 'contacto'].indexOf(payload.tipo) >= 0 ? payload.tipo : 'compra';
 
 
     appendRow_('Encargos', {
@@ -210,15 +252,23 @@ function registrarEncargo(payload) {
       cliente_whatsapp: payload.clienteWhatsapp || '',
       notas:            payload.notas || '',
       estado:           'pendiente',
-      canal:            canal
+      canal:            canal,
+      tipo:             tipo
     });
 
 
+    const titulos = {
+      compra:   canal === 'web' ? '📱 <b>Encargo desde el catálogo web</b>\n' : '📋 <b>Nuevo encargo</b>\n',
+      venta:    '💰 <b>Alguien quiere vender sus libros</b>' + (canal === 'web' ? ' (catálogo web)' : '') + '\n',
+      contacto: '💬 <b>Mensaje desde el catálogo web</b>\n'
+    };
+    const etiquetaMensaje = tipo === 'contacto' ? '📝 Mensaje: ' : '📚 Libro(s): ';
+
     notificarTelegram_(
-      (canal === 'web' ? '📱 <b>Encargo desde el catálogo web</b>\n' : '📋 <b>Nuevo encargo</b>\n') +
+      titulos[tipo] +
       '☕ Café: ' + payload.cafeName + '\n' +
-      '📚 Libro: ' + payload.descripcion + '\n' +
-      (payload.clienteNombre   ? '👤 Cliente: '  + payload.clienteNombre   + '\n' : '') +
+      etiquetaMensaje + payload.descripcion + '\n' +
+      (payload.clienteNombre   ? '👤 Nombre: '   + payload.clienteNombre   + '\n' : '') +
       (payload.clienteWhatsapp ? '📱 WhatsApp: ' + payload.clienteWhatsapp + '\n' : '') +
       (payload.notas ? '📝 Notas: ' + payload.notas : '')
     );
@@ -255,7 +305,7 @@ function setupSheet() {
     ],
     'Encargos': [
       'id', 'fecha', 'id_cafe', 'cafe', 'descripcion',
-      'cliente_nombre', 'cliente_whatsapp', 'notas', 'estado', 'canal'
+      'cliente_nombre', 'cliente_whatsapp', 'notas', 'estado', 'canal', 'tipo'
     ]
   };
 
@@ -292,6 +342,7 @@ function setupSheet() {
   setDropdown_('Ventas',   'canal',            ['cafe', 'web']);
   setDropdown_('Encargos', 'estado',           ['pendiente', 'gestionado', 'recibido', 'entregado']);
   setDropdown_('Encargos', 'canal',            ['cafe', 'web']);
+  setDropdown_('Encargos', 'tipo',             ['compra', 'venta', 'contacto']);
 
 
   const cafesSheet = SS.getSheetByName('Cafés');
@@ -479,6 +530,19 @@ function migrarGenero() {
 }
 
 
+// ── Migración segura: agrega la columna "tipo" (compra / venta / contacto)
+// a Encargos, para distinguir pedidos de compra de ofertas de venta y
+// mensajes de contacto que llegan desde el catálogo web. Los encargos
+// existentes (todos "compra" hasta ahora) quedan sin tocar. Correr UNA
+// sola vez desde el editor de Apps Script.
+function migrarTipoEncargo() {
+  agregarColumnasFaltantes_('Encargos', ['tipo']);
+  setDropdown_('Encargos', 'tipo', ['compra', 'venta', 'contacto']);
+
+  SpreadsheetApp.getUi().alert('✅ Listo', 'Se agregó la columna "tipo" a Encargos. No se borró ningún dato existente.', SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+
 function agregarColumnasFaltantes_(sheetName, columnas) {
   const sh = SS.getSheetByName(sheetName);
   if (!sh) return;
@@ -498,7 +562,9 @@ function agregarColumnasFaltantes_(sheetName, columnas) {
 
 
 function getPendingEncargos() {
-  return getRows_('Encargos').filter(r => r.estado === 'pendiente');
+  return getRows_('Encargos').filter(
+    r => r.estado === 'pendiente' && (r.tipo || 'compra') === 'compra'
+  );
 }
 
 
