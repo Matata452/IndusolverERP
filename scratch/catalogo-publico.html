@@ -144,6 +144,19 @@
   }
   select:focus{outline:2px solid var(--accent);outline-offset:1px;}
 
+  .genre-row{
+    display:flex;gap:6px;overflow-x:auto;margin:0 0 14px;padding-bottom:2px;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+  }
+  .genre-row::-webkit-scrollbar{display:none;}
+  .genre-chip{
+    flex-shrink:0;border:1.5px solid var(--line);border-radius:100px;
+    background:var(--surface);color:var(--ink);
+    font-family:inherit;font-size:.8rem;font-weight:700;
+    padding:6px 13px;cursor:pointer;white-space:nowrap;
+  }
+  .genre-chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
+
   #count-line{
     font-size:.82rem;color:var(--muted);margin-bottom:12px;font-weight:600;
     font-variant-numeric:tabular-nums;
@@ -170,6 +183,12 @@
   }
   .book .autor{font-size:.86rem;font-weight:600;color:var(--accent);}
   .book .editorial{font-size:.78rem;color:var(--muted);font-weight:500;}
+  .book .genero{
+    align-self:flex-start;margin-top:4px;
+    font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
+    background:var(--bg);color:var(--ink);
+    padding:2px 7px;border-radius:5px;
+  }
 
   #empty{display:none;text-align:center;padding:48px 16px;color:var(--muted);}
   #empty .e{font-size:2rem;margin-bottom:8px;}
@@ -276,6 +295,8 @@
     </select>
   </div>
 
+  <div class="genre-row" id="genre-row"></div>
+
   <p id="count-line"></p>
 
   <div id="grid"></div>
@@ -335,35 +356,54 @@
 </dialog>
 
 <script>
+  const GENEROS = [
+    'Ficción Moderna', 'Novela Policial', 'Novela Romántica', 'Fantasía juvenil',
+    'Cuentos y Relatos', 'Clásicos', 'Ensayos e Historia', 'Biografías y Crónicas',
+    'Autoayuda', 'Negocios'
+  ];
+
   const LIBROS = [
-    { titulo:"Cien años de soledad", autor:"Gabriel García Márquez", editorial:"Sudamericana" },
-    { titulo:"Rayuela", autor:"Julio Cortázar", editorial:"Alfaguara" },
-    { titulo:"Ficciones", autor:"Jorge Luis Borges", editorial:"Emecé" },
-    { titulo:"La casa de los espíritus", autor:"Isabel Allende", editorial:"Plaza & Janés" },
-    { titulo:"Los detectives salvajes", autor:"Roberto Bolaño", editorial:"Anagrama" },
-    { titulo:"El túnel", autor:"Ernesto Sabato", editorial:"Seix Barral" },
-    { titulo:"Pedro Páramo", autor:"Juan Rulfo", editorial:"Cátedra" },
-    { titulo:"Aura", autor:"Carlos Fuentes", editorial:"Era" },
-    { titulo:"Trilce", autor:"César Vallejo", editorial:"" },
-    { titulo:"Boquitas pintadas", autor:"Manuel Puig", editorial:"Seix Barral" },
-    { titulo:"Kentukis", autor:"Samanta Schweblin", editorial:"Random House" },
-    { titulo:"Las cosas que perdimos en el fuego", autor:"Mariana Enríquez", editorial:"Anagrama" },
-    { titulo:"La invención de Morel", autor:"Adolfo Bioy Casares", editorial:"Losada" },
-    { titulo:"Bomarzo", autor:"Manuel Mujica Láinez", editorial:"Sudamericana" },
-    { titulo:"Respiración artificial", autor:"Ricardo Piglia", editorial:"Anagrama" },
-    { titulo:"El beso de la mujer araña", autor:"Manuel Puig", editorial:"Seix Barral" },
-    { titulo:"La tregua", autor:"Mario Benedetti", editorial:"Alfaguara" },
-    { titulo:"Nada", autor:"Carmen Laforet", editorial:"Destino" }
+    { titulo:"Cien años de soledad", autor:"Gabriel García Márquez", editorial:"Sudamericana", genero:"Clásicos" },
+    { titulo:"Rayuela", autor:"Julio Cortázar", editorial:"Alfaguara", genero:"Ficción Moderna" },
+    { titulo:"Ficciones", autor:"Jorge Luis Borges", editorial:"Emecé", genero:"Cuentos y Relatos" },
+    { titulo:"La casa de los espíritus", autor:"Isabel Allende", editorial:"Plaza & Janés", genero:"Ficción Moderna" },
+    { titulo:"Los detectives salvajes", autor:"Roberto Bolaño", editorial:"Anagrama", genero:"Ficción Moderna" },
+    { titulo:"El túnel", autor:"Ernesto Sabato", editorial:"Seix Barral", genero:"Novela Policial" },
+    { titulo:"Pedro Páramo", autor:"Juan Rulfo", editorial:"Cátedra", genero:"Clásicos" },
+    { titulo:"Aura", autor:"Carlos Fuentes", editorial:"Era", genero:"Fantasía juvenil" },
+    { titulo:"Trilce", autor:"César Vallejo", editorial:"", genero:"Cuentos y Relatos" },
+    { titulo:"Boquitas pintadas", autor:"Manuel Puig", editorial:"Seix Barral", genero:"Novela Romántica" },
+    { titulo:"Kentukis", autor:"Samanta Schweblin", editorial:"Random House", genero:"Ficción Moderna" },
+    { titulo:"Las cosas que perdimos en el fuego", autor:"Mariana Enríquez", editorial:"Anagrama", genero:"Cuentos y Relatos" },
+    { titulo:"La invención de Morel", autor:"Adolfo Bioy Casares", editorial:"Losada", genero:"Clásicos" },
+    { titulo:"Bomarzo", autor:"Manuel Mujica Láinez", editorial:"Sudamericana", genero:"Ensayos e Historia" },
+    { titulo:"Respiración artificial", autor:"Ricardo Piglia", editorial:"Anagrama", genero:"Ficción Moderna" },
+    { titulo:"El beso de la mujer araña", autor:"Manuel Puig", editorial:"Seix Barral", genero:"Novela Romántica" },
+    { titulo:"La tregua", autor:"Mario Benedetti", editorial:"Alfaguara", genero:"Novela Romántica" },
+    { titulo:"Nada", autor:"Carmen Laforet", editorial:"Destino", genero:"Clásicos" }
   ];
   const SPINES = ['var(--spine-1)','var(--spine-2)','var(--spine-3)','var(--spine-4)','var(--spine-5)'];
 
+  let generoActivo = '';
   const grid   = document.getElementById('grid');
   const qEl    = document.getElementById('q');
   const sortEl = document.getElementById('sort');
   const empty  = document.getElementById('empty');
   const countLine = document.getElementById('count-line');
+  const genreRow  = document.getElementById('genre-row');
 
   document.getElementById('total-count').textContent = LIBROS.length;
+
+  genreRow.innerHTML = ['Todos'].concat(GENEROS).map(g => `
+    <button type="button" class="genre-chip ${g==='Todos'?'on':''}" data-g="${g==='Todos'?'':g}">${g}</button>
+  `).join('');
+  genreRow.querySelectorAll('.genre-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      generoActivo = chip.dataset.g;
+      genreRow.querySelectorAll('.genre-chip').forEach(c => c.classList.toggle('on', c === chip));
+      render();
+    });
+  });
 
   function apellido(autor){
     const partes = autor.trim().split(' ');
@@ -379,7 +419,8 @@
     const modo = sortEl.value;
 
     let filtrados = LIBROS.filter(b =>
-      b.titulo.toLowerCase().includes(q) || b.autor.toLowerCase().includes(q)
+      (b.titulo.toLowerCase().includes(q) || b.autor.toLowerCase().includes(q)) &&
+      (!generoActivo || b.genero === generoActivo)
     );
 
     filtrados = filtrados.slice().sort((a, b) => {
@@ -387,7 +428,7 @@
       return apellido(a.autor).localeCompare(apellido(b.autor), 'es');
     });
 
-    countLine.textContent = q
+    countLine.textContent = (q || generoActivo)
       ? filtrados.length + ' resultado' + (filtrados.length !== 1 ? 's' : '')
       : '';
 
@@ -404,6 +445,7 @@
         <div class="titulo">${x(b.titulo)}</div>
         <div class="autor">${x(b.autor)}</div>
         ${b.editorial ? `<div class="editorial">${x(b.editorial)}</div>` : ''}
+        ${b.genero ? `<div class="genero">${x(b.genero)}</div>` : ''}
       </div>`).join('');
   }
 

@@ -35,7 +35,8 @@ function getCatalogo() {
     isbn:      String(r.isbn      || ''),
     titulo:    String(r.titulo    || ''),
     autor:     String(r.autor     || ''),
-    editorial: String(r.editorial || '')
+    editorial: String(r.editorial || ''),
+    genero:    String(r.genero    || '')
   }));
 }
 
@@ -60,6 +61,9 @@ function agregarLibroAlCatalogo(libro) {
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(5000)) return { ok: false, error: 'Sistema ocupado.' };
   try {
+    if (GENEROS.indexOf(libro.genero) < 0) {
+      return { ok: false, error: 'Elegí un género de la lista.' };
+    }
     if (libro.isbn) {
       const isbn = String(libro.isbn).replace(/\D/g, '');
       const existe = getRows_('Catálogo').find(
@@ -71,13 +75,15 @@ function agregarLibroAlCatalogo(libro) {
       isbn:      String(libro.isbn      || ''),
       titulo:    String(libro.titulo    || ''),
       autor:     String(libro.autor     || ''),
-      editorial: String(libro.editorial || '')
+      editorial: String(libro.editorial || ''),
+      genero:    String(libro.genero    || '')
     });
     return { ok: true, libro: {
       isbn:      String(libro.isbn      || ''),
       titulo:    String(libro.titulo    || ''),
       autor:     String(libro.autor     || ''),
-      editorial: String(libro.editorial || '')
+      editorial: String(libro.editorial || ''),
+      genero:    String(libro.genero    || '')
     }};
   } catch (err) {
     return { ok: false, error: err.message };
@@ -119,6 +125,7 @@ function crearRemitoEntrega(data) {
         titulo:        String(item.titulo     || ''),
         autor:         String(item.autor      || ''),
         editorial:     String(item.editorial  || ''),
+        genero:        String(item.genero     || ''),
         id_cafe:       data.cafeId,
         modalidad:     String(item.modalidad  || 'consignacion'),
         costo_firme:   String(item.costo_firme|| ''),

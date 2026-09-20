@@ -97,6 +97,19 @@
   }
   select:focus{outline:2px solid var(--accent);outline-offset:1px;}
 
+  .genre-row{
+    display:flex;gap:6px;overflow-x:auto;margin:0 0 14px;padding-bottom:2px;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+  }
+  .genre-row::-webkit-scrollbar{display:none;}
+  .genre-chip{
+    flex-shrink:0;border:1.5px solid var(--line);border-radius:100px;
+    background:var(--surface);color:var(--ink);
+    font-family:inherit;font-size:.8rem;font-weight:700;
+    padding:6px 13px;cursor:pointer;white-space:nowrap;
+  }
+  .genre-chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
+
   #count-line{
     font-size:.82rem;color:var(--muted);margin-bottom:12px;font-weight:600;
     font-variant-numeric:tabular-nums;
@@ -123,6 +136,12 @@
   }
   .book .autor{font-size:.86rem;font-weight:600;color:var(--accent);}
   .book .editorial{font-size:.78rem;color:var(--muted);font-weight:500;}
+  .book .genero{
+    align-self:flex-start;margin-top:4px;
+    font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
+    background:var(--bg);color:var(--ink);
+    padding:2px 7px;border-radius:5px;
+  }
 
   #empty{display:none;text-align:center;padding:48px 16px;color:var(--muted);}
   #empty .e{font-size:2rem;margin-bottom:8px;}
@@ -230,6 +249,8 @@
     </select>
   </div>
 
+  <div class="genre-row" id="genre-row"></div>
+
   <p id="count-line"></p>
 
   <div id="grid"><div class="loading">Cargando catálogo...</div></div>
@@ -292,7 +313,14 @@
   const CAFE_ID   = '<?= cafeId ?>';
   const CAFE_NAME = '<?= cafeName ?>';
 
+  const GENEROS = [
+    'Ficción Moderna', 'Novela Policial', 'Novela Romántica', 'Fantasía juvenil',
+    'Cuentos y Relatos', 'Clásicos', 'Ensayos e Historia', 'Biografías y Crónicas',
+    'Autoayuda', 'Negocios'
+  ];
+
   let LIBROS = [];
+  let generoActivo = '';
   const SPINES = ['var(--spine-1)','var(--spine-2)','var(--spine-3)','var(--spine-4)','var(--spine-5)'];
 
   const grid   = document.getElementById('grid');
@@ -300,8 +328,20 @@
   const sortEl = document.getElementById('sort');
   const empty  = document.getElementById('empty');
   const countLine = document.getElementById('count-line');
+  const genreRow  = document.getElementById('genre-row');
 
   window.onload = function(){
+    genreRow.innerHTML = ['Todos'].concat(GENEROS).map(g => `
+      <button type="button" class="genre-chip ${g==='Todos'?'on':''}" data-g="${g==='Todos'?'':x(g)}">${x(g)}</button>
+    `).join('');
+    genreRow.querySelectorAll('.genre-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        generoActivo = chip.dataset.g;
+        genreRow.querySelectorAll('.genre-chip').forEach(c => c.classList.toggle('on', c === chip));
+        render();
+      });
+    });
+
     google.script.run
       .withSuccessHandler(function(data){
         LIBROS = data || [];
@@ -328,7 +368,8 @@
     const modo = sortEl.value;
 
     let filtrados = LIBROS.filter(b =>
-      b.titulo.toLowerCase().includes(q) || b.autor.toLowerCase().includes(q)
+      (b.titulo.toLowerCase().includes(q) || b.autor.toLowerCase().includes(q)) &&
+      (!generoActivo || b.genero === generoActivo)
     );
 
     filtrados = filtrados.slice().sort((a, b) => {
@@ -336,7 +377,7 @@
       return apellido(a.autor).localeCompare(apellido(b.autor), 'es');
     });
 
-    countLine.textContent = q
+    countLine.textContent = (q || generoActivo)
       ? filtrados.length + ' resultado' + (filtrados.length !== 1 ? 's' : '')
       : '';
 
@@ -353,6 +394,7 @@
         <div class="titulo">${x(b.titulo)}</div>
         <div class="autor">${x(b.autor)}</div>
         ${b.editorial ? `<div class="editorial">${x(b.editorial)}</div>` : ''}
+        ${b.genero ? `<div class="genero">${x(b.genero)}</div>` : ''}
       </div>`).join('');
   }
 

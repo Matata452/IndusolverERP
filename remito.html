@@ -108,9 +108,13 @@
         <span class="field-label">ISBN</span>
         <input type="text" id="cat-isbn" placeholder="9789...">
       </div>
-      <div class="full">
+      <div>
         <span class="field-label">Editorial</span>
         <input type="text" id="cat-editorial" placeholder="Nombre de la editorial">
+      </div>
+      <div>
+        <span class="field-label">Género *</span>
+        <select id="cat-genero"></select>
       </div>
     </div>
     <button class="btn btn-primary" style="width:auto;padding:6px 16px;font-size:12px" onclick="guardarEnCatalogo()">Guardar en Catálogo</button>
@@ -184,6 +188,12 @@
 <script>
 const MODO = '<?= modo ?>';
 
+const GENEROS = [
+  'Ficción Moderna', 'Novela Policial', 'Novela Romántica', 'Fantasía juvenil',
+  'Cuentos y Relatos', 'Clásicos', 'Ensayos e Historia', 'Biografías y Crónicas',
+  'Autoayuda', 'Negocios'
+];
+
 
 let catalogoData    = [];
 let remitoItems     = [];
@@ -196,6 +206,10 @@ let _catalogoResults = [];
 window.onload = function() {
   document.getElementById('sec-entrega').style.display = MODO === 'entrega' ? '' : 'none';
   document.getElementById('sec-retiro').style.display  = MODO === 'retiro'  ? '' : 'none';
+
+  const generoSel = document.getElementById('cat-genero');
+  generoSel.innerHTML = '<option value="">— Elegí un género —</option>' +
+    GENEROS.map(g => `<option value="${x(g)}">${x(g)}</option>`).join('');
 
 
   google.script.run
@@ -246,7 +260,7 @@ function filtrarCatalogo(q) {
     <div class="result-item">
       <div class="result-info">
         <div class="result-title">${x(b.titulo)}</div>
-        <div class="result-sub">${x(b.autor)}${b.isbn ? ' · ' + x(b.isbn) : ''}</div>
+        <div class="result-sub">${x(b.autor)}${b.genero ? ' · ' + x(b.genero) : ''}</div>
       </div>
       <button class="btn-add-book" onclick="agregarLibro(${i})">+ Agregar</button>
     </div>`).join('');
@@ -260,6 +274,7 @@ function agregarLibro(i) {
     titulo:      libro.titulo    || '',
     autor:       libro.autor     || '',
     editorial:   libro.editorial || '',
+    genero:      libro.genero    || '',
     modalidad:   'consignacion',
     costo_firme: ''
   });
@@ -358,10 +373,12 @@ function guardarEnCatalogo() {
   const autor     = document.getElementById('cat-autor').value.trim();
   const isbn      = document.getElementById('cat-isbn').value.trim();
   const editorial = document.getElementById('cat-editorial').value.trim();
+  const genero    = document.getElementById('cat-genero').value;
 
 
   if (!titulo) { showError('El título es obligatorio.'); return; }
   if (!autor)  { showError('El autor es obligatorio.');  return; }
+  if (!genero) { showError('Elegí un género.');           return; }
 
 
   const btn = document.querySelector('#panel-catalogo .btn-primary');
@@ -376,12 +393,13 @@ function guardarEnCatalogo() {
       showOk('✓ Libro agregado al Catálogo. Ya podés buscarlo y agregarlo al remito.');
       document.getElementById('panel-catalogo').style.display = 'none';
       ['cat-titulo','cat-autor','cat-isbn','cat-editorial'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('cat-genero').value = '';
     })
     .withFailureHandler(function() {
       btn.disabled = false; btn.textContent = 'Guardar en Catálogo';
       showError('Error al guardar. Intentá de nuevo.');
     })
-    .agregarLibroAlCatalogo({ titulo, autor, isbn, editorial });
+    .agregarLibroAlCatalogo({ titulo, autor, isbn, editorial, genero });
 }
 
 

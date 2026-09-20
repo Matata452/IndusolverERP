@@ -6,6 +6,19 @@
 
 const SS = SpreadsheetApp.getActiveSpreadsheet();
 
+const GENEROS = [
+  'Ficción Moderna',
+  'Novela Policial',
+  'Novela Romántica',
+  'Fantasía juvenil',
+  'Cuentos y Relatos',
+  'Clásicos',
+  'Ensayos e Historia',
+  'Biografías y Crónicas',
+  'Autoayuda',
+  'Negocios'
+];
+
 
 function onOpen() {
   SpreadsheetApp.getUi()
@@ -90,7 +103,8 @@ function getStockPublico(cafeId) {
     .map(r => ({
       titulo:    String(r.titulo    || ''),
       autor:     String(r.autor     || ''),
-      editorial: String(r.editorial || '')
+      editorial: String(r.editorial || ''),
+      genero:    String(r.genero    || '')
     }));
 }
 
@@ -224,9 +238,9 @@ function setupSheet() {
 
   const SHEETS = {
     'Cafés':    ['id', 'nombre', 'slug', 'activo'],
-    'Catálogo': ['isbn', 'titulo', 'autor', 'editorial'],
+    'Catálogo': ['isbn', 'titulo', 'autor', 'editorial', 'genero'],
     'Stock': [
-      'id_ejemplar', 'isbn', 'titulo', 'autor', 'editorial',
+      'id_ejemplar', 'isbn', 'titulo', 'autor', 'editorial', 'genero',
       'id_cafe', 'modalidad', 'costo_firme', 'ubicacion',
       'fecha_ingreso', 'id_remito', 'id_encargo',
       'donante_nombre', 'donante_telefono'
@@ -266,8 +280,10 @@ function setupSheet() {
 
 
   setDropdown_('Cafés',    'activo',          ['TRUE', 'FALSE']);
+  setDropdown_('Catálogo', 'genero',           GENEROS);
   setDropdown_('Stock',    'modalidad',        ['consignacion', 'firme', 'donacion']);
   setDropdown_('Stock',    'ubicacion',        ['en_cafe', 'vendido', 'retirado']);
+  setDropdown_('Stock',    'genero',           GENEROS);
   setDropdown_('Ventas',   'tipo_pago',        ['transfer_bookbuster', 'cafe']);
   setDropdown_('Ventas',   'modalidad',        ['consignacion', 'firme', 'donacion']);
   setDropdown_('Ventas',   'estado_comision',  ['pendiente', 'pagada']);
@@ -443,6 +459,22 @@ function migrarCanalEncargo() {
   setDropdown_('Ventas',   'canal', ['cafe', 'web']);
 
   SpreadsheetApp.getUi().alert('✅ Listo', 'Se agregó la columna "canal" (cafe / web) a Encargos y Ventas. No se borró ningún dato existente.', SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+
+// ── Migración segura: agrega la columna "genero" a Catálogo y Stock,
+// con la lista fija de géneros como validación. Los libros ya cargados
+// quedan con el campo vacío hasta que se completen a mano; los que se
+// carguen desde ahora por Remito van a pedirlo obligatoriamente.
+// Correr UNA sola vez desde el editor de Apps Script.
+function migrarGenero() {
+  agregarColumnasFaltantes_('Catálogo', ['genero']);
+  agregarColumnasFaltantes_('Stock',    ['genero']);
+
+  setDropdown_('Catálogo', 'genero', GENEROS);
+  setDropdown_('Stock',    'genero', GENEROS);
+
+  SpreadsheetApp.getUi().alert('✅ Listo', 'Se agregó la columna "genero" a Catálogo y Stock, con la lista fija como validación. No se borró ningún dato existente.', SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 
