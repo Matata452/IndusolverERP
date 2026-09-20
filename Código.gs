@@ -101,6 +101,7 @@ function getStockPublico(cafeId) {
       !r.id_encargo
     )
     .map(r => ({
+      isbn:      String(r.isbn      || ''),
       titulo:    String(r.titulo    || ''),
       autor:     String(r.autor     || ''),
       editorial: String(r.editorial || ''),

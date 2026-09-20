@@ -22,11 +22,6 @@
     --highlight-ink:#000000;
     --error:#F8271C;
     --error-bg:#FDEAE8;
-    --spine-1:#5767F6;
-    --spine-2:#F96215;
-    --spine-3:#F8271C;
-    --spine-4:#F8A9F8;
-    --spine-5:#FBFF1F;
   }
   *,*::before,*::after{box-sizing:border-box;}
   html,body{margin:0;}
@@ -103,12 +98,15 @@
   }
   .genre-row::-webkit-scrollbar{display:none;}
   .genre-chip{
-    flex-shrink:0;border:1.5px solid var(--line);border-radius:100px;
+    flex-shrink:0;display:inline-flex;align-items:center;gap:6px;
+    border:1.5px solid var(--line);border-radius:100px;
     background:var(--surface);color:var(--ink);
     font-family:inherit;font-size:.8rem;font-weight:700;
     padding:6px 13px;cursor:pointer;white-space:nowrap;
   }
-  .genre-chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
+  .genre-chip .swatch{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .genre-chip.on{border-color:transparent;}
+  .genre-chip.on .swatch{display:none;}
 
   #count-line{
     font-size:.82rem;color:var(--muted);margin-bottom:12px;font-weight:600;
@@ -123,11 +121,18 @@
   .book{
     background:var(--surface);
     border:1px solid var(--line);
-    border-left:5px solid var(--spine-1);
     border-radius:8px;
-    padding:12px 14px;
-    display:flex;flex-direction:column;gap:2px;
+    padding:10px;
+    display:flex;gap:10px;align-items:flex-start;
   }
+  .book-cover{
+    position:relative;flex-shrink:0;
+    width:50px;height:75px;border-radius:5px;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.3rem;
+  }
+  .book-cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .book-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
   .book .titulo{
     font-family:'Roboto Flex',sans-serif;
     font-weight:700;font-variation-settings:'wght' 700;
@@ -139,7 +144,6 @@
   .book .genero{
     align-self:flex-start;margin-top:4px;
     font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
-    background:var(--bg);color:var(--ink);
     padding:2px 7px;border-radius:5px;
   }
 
@@ -313,15 +317,23 @@
   const CAFE_ID   = '<?= cafeId ?>';
   const CAFE_NAME = '<?= cafeName ?>';
 
-  const GENEROS = [
-    'Ficción Moderna', 'Novela Policial', 'Novela Romántica', 'Fantasía juvenil',
-    'Cuentos y Relatos', 'Clásicos', 'Ensayos e Historia', 'Biografías y Crónicas',
-    'Autoayuda', 'Negocios'
-  ];
+  const GENERO_COLOR = {
+    'Ficción Moderna':        { bg:'#5767F6', ink:'#FFFFFF' },
+    'Novela Policial':        { bg:'#F8271C', ink:'#FFFFFF' },
+    'Novela Romántica':       { bg:'#F8A9F8', ink:'#000000' },
+    'Fantasía juvenil':       { bg:'#9B5DE5', ink:'#FFFFFF' },
+    'Cuentos y Relatos':      { bg:'#FBFF1F', ink:'#000000' },
+    'Clásicos':               { bg:'#2E7D32', ink:'#FFFFFF' },
+    'Ensayos e Historia':     { bg:'#F96215', ink:'#FFFFFF' },
+    'Biografías y Crónicas':  { bg:'#00B4B4', ink:'#FFFFFF' },
+    'Autoayuda':              { bg:'#FFB703', ink:'#000000' },
+    'Negocios':               { bg:'#6B4423', ink:'#FFFFFF' }
+  };
+  const GENEROS = Object.keys(GENERO_COLOR);
+  const COLOR_DEFAULT = { bg:'#E7E7F0', ink:'#000000' };
 
   let LIBROS = [];
   let generoActivo = '';
-  const SPINES = ['var(--spine-1)','var(--spine-2)','var(--spine-3)','var(--spine-4)','var(--spine-5)'];
 
   const grid   = document.getElementById('grid');
   const qEl    = document.getElementById('q');
@@ -331,13 +343,25 @@
   const genreRow  = document.getElementById('genre-row');
 
   window.onload = function(){
-    genreRow.innerHTML = ['Todos'].concat(GENEROS).map(g => `
-      <button type="button" class="genre-chip ${g==='Todos'?'on':''}" data-g="${g==='Todos'?'':x(g)}">${x(g)}</button>
-    `).join('');
+    genreRow.innerHTML = ['Todos'].concat(GENEROS).map(g => {
+      const on  = g === 'Todos';
+      const col = on ? { bg:'var(--accent)', ink:'var(--accent-ink)' } : GENERO_COLOR[g];
+      return `
+      <button type="button" class="genre-chip ${on?'on':''}" data-g="${on?'':x(g)}"
+        style="${on?`background:${col.bg};color:${col.ink}`:''}">
+        <span class="swatch" style="background:${GENERO_COLOR[g] ? GENERO_COLOR[g].bg : ''}"></span>${x(g)}
+      </button>`;
+    }).join('');
     genreRow.querySelectorAll('.genre-chip').forEach(chip => {
       chip.addEventListener('click', () => {
         generoActivo = chip.dataset.g;
-        genreRow.querySelectorAll('.genre-chip').forEach(c => c.classList.toggle('on', c === chip));
+        const col = generoActivo ? GENERO_COLOR[generoActivo] : { bg:'var(--accent)', ink:'var(--accent-ink)' };
+        genreRow.querySelectorAll('.genre-chip').forEach(c => {
+          const activo = c === chip;
+          c.classList.toggle('on', activo);
+          c.style.background = activo ? col.bg : '';
+          c.style.color      = activo ? col.ink : '';
+        });
         render();
       });
     });
@@ -389,13 +413,25 @@
     grid.hidden = false;
     empty.style.display = 'none';
 
-    grid.innerHTML = filtrados.map((b, i) => `
-      <div class="book" style="border-left-color:${SPINES[i % SPINES.length]}">
-        <div class="titulo">${x(b.titulo)}</div>
-        <div class="autor">${x(b.autor)}</div>
-        ${b.editorial ? `<div class="editorial">${x(b.editorial)}</div>` : ''}
-        ${b.genero ? `<div class="genero">${x(b.genero)}</div>` : ''}
-      </div>`).join('');
+    grid.innerHTML = filtrados.map((b) => {
+      const col = GENERO_COLOR[b.genero] || COLOR_DEFAULT;
+      const cover = b.isbn
+        ? `<img src="https://covers.openlibrary.org/b/isbn/${encodeURIComponent(b.isbn)}-M.jpg?default=false" alt="" loading="lazy" onerror="this.remove()">`
+        : '';
+      return `
+      <div class="book">
+        <div class="book-cover" style="background:${col.bg};color:${col.ink}">
+          <span>📖</span>
+          ${cover}
+        </div>
+        <div class="book-info">
+          <div class="titulo">${x(b.titulo)}</div>
+          <div class="autor">${x(b.autor)}</div>
+          ${b.editorial ? `<div class="editorial">${x(b.editorial)}</div>` : ''}
+          ${b.genero ? `<div class="genero" style="background:${col.bg};color:${col.ink}">${x(b.genero)}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
   }
 
   qEl.addEventListener('input', render);
