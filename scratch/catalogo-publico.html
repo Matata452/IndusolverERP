@@ -157,32 +157,6 @@
   .genre-chip.on{border-color:transparent;}
   .genre-chip.on .swatch{display:none;}
 
-  .cafe-row{
-    display:flex;gap:6px;overflow-x:auto;margin:0 0 14px;padding-bottom:2px;
-    -webkit-overflow-scrolling:touch;scrollbar-width:none;
-  }
-  .cafe-row::-webkit-scrollbar{display:none;}
-  .cafe-chip{
-    flex-shrink:0;border:1.5px solid var(--line);border-radius:100px;
-    background:var(--surface);color:var(--ink);
-    font-family:inherit;font-size:.8rem;font-weight:700;
-    padding:6px 13px;cursor:pointer;white-space:nowrap;
-  }
-  .cafe-chip.on{background:var(--ink);border-color:var(--ink);color:var(--surface);}
-  .book .cafe-tag{font-size:.78rem;font-weight:600;color:var(--ink);}
-
-  .view-toggle{
-    display:inline-flex;gap:2px;padding:3px;border-radius:100px;
-    background:var(--surface);border:1px solid var(--line);
-    margin-bottom:18px;
-  }
-  .view-toggle button{
-    border:none;background:none;border-radius:100px;
-    padding:6px 12px;font-family:inherit;font-size:.78rem;font-weight:700;
-    color:var(--muted);cursor:pointer;
-  }
-  .view-toggle button.on{background:var(--ink);color:var(--surface);}
-
   #count-line{
     font-size:.82rem;color:var(--muted);margin-bottom:12px;font-weight:600;
     font-variant-numeric:tabular-nums;
@@ -249,11 +223,6 @@
     box-shadow:0 3px 10px rgba(0,0,0,.1);
   }
   .action-btn:active{opacity:.85;}
-  .ig-link{
-    display:flex;align-items:center;justify-content:center;gap:6px;
-    font-size:.85rem;font-weight:700;color:var(--ink);
-    text-decoration:none;padding:12px;margin-bottom:6px;
-  }
 
   dialog{
     border:none;border-radius:14px 14px 0 0;
@@ -310,14 +279,10 @@
 <div class="wrap">
 
   <span class="preview-pill">Vista previa — datos de ejemplo</span>
-  <div class="view-toggle">
-    <button type="button" id="tab-cafe" class="on">Café individual</button>
-    <button type="button" id="tab-todos">Todas las librerías</button>
-  </div>
 
   <header class="cafe">
     <span class="kicker">Catálogo Bookbuster</span>
-    <h1 id="h1-cafe">Café de la Esquina</h1>
+    <h1>Café de la Esquina</h1>
     <div class="cafe-meta">
       <span class="count"><strong id="total-count">0</strong> libros disponibles hoy</span>
       <span class="dot"></span>
@@ -325,7 +290,7 @@
     </div>
   </header>
 
-  <div class="capabilities" id="capabilities">
+  <div class="capabilities">
     <div class="cap">
       <span class="cap-ico" style="background:#5767F6">📖</span>
       <div>
@@ -369,8 +334,6 @@
 
   <div class="genre-row" id="genre-row"></div>
 
-  <div class="cafe-row" id="cafe-row" hidden></div>
-
   <p id="count-line"></p>
 
   <div id="grid"></div>
@@ -380,14 +343,12 @@
     <p>No encontramos ningún libro con eso.</p>
   </div>
 
-  <div class="actions" id="actions">
+  <div class="actions">
     <button type="button" class="action-btn" id="btn-pedir" style="background:var(--accent);color:var(--accent-ink)">📩 Pedir un libro</button>
     <button type="button" class="action-btn" id="btn-vender" style="background:var(--cta);color:var(--cta-ink)">💰 Vender mis libros</button>
     <button type="button" class="action-btn" id="btn-hablar" style="background:#000;color:#fff">💬 Hablar con Bookbuster</button>
-    <a class="action-btn" href="?catalogo=todos" style="background:var(--highlight);color:var(--highlight-ink)">📚 Ver todas las librerías</a>
+    <a class="action-btn" href="https://www.instagram.com/bookbuster.club/" target="_blank" rel="noopener" style="background:var(--highlight);color:var(--highlight-ink)">📸 Seguinos en Instagram</a>
   </div>
-
-  <a class="ig-link" href="https://www.instagram.com/bookbuster.club/" target="_blank" rel="noopener">📸 Seguinos en Instagram</a>
 
   <footer>
     <span class="powered">Catálogo por <b>Bookbuster</b></span>
@@ -486,72 +447,35 @@
   const COLOR_DEFAULT = { bg:'#E7E7F0', ink:'#000000' };
 
   const LIBROS = [
-    { titulo:"Cien años de soledad", autor:"Gabriel García Márquez", editorial:"Sudamericana", genero:"Clásicos", isbn:"9780307474728", cafe:"Café de la Esquina" },
-    { titulo:"Rayuela", autor:"Julio Cortázar", editorial:"Alfaguara", genero:"Ficción Moderna", isbn:"9788437604572", cafe:"Cigaló" },
-    { titulo:"Ficciones", autor:"Jorge Luis Borges", editorial:"Emecé", genero:"Cuentos y Relatos", cafe:"Café de la Esquina" },
-    { titulo:"La casa de los espíritus", autor:"Isabel Allende", editorial:"Plaza & Janés", genero:"Ficción Moderna", isbn:"9788401337208", cafe:"Café Belgrano" },
-    { titulo:"Los detectives salvajes", autor:"Roberto Bolaño", editorial:"Anagrama", genero:"Ficción Moderna", cafe:"Cigaló" },
-    { titulo:"El túnel", autor:"Ernesto Sabato", editorial:"Seix Barral", genero:"Novela Policial", cafe:"Café Belgrano" },
-    { titulo:"Pedro Páramo", autor:"Juan Rulfo", editorial:"Cátedra", genero:"Clásicos", isbn:"9788437604695", cafe:"Café de la Esquina" },
-    { titulo:"Aura", autor:"Carlos Fuentes", editorial:"Era", genero:"Fantasía juvenil", cafe:"Cigaló" },
-    { titulo:"Trilce", autor:"César Vallejo", editorial:"", genero:"Cuentos y Relatos", cafe:"Café de la Esquina" },
-    { titulo:"Boquitas pintadas", autor:"Manuel Puig", editorial:"Seix Barral", genero:"Novela Romántica", cafe:"Café Belgrano" },
-    { titulo:"Kentukis", autor:"Samanta Schweblin", editorial:"Random House", genero:"Ficción Moderna", cafe:"Cigaló" },
-    { titulo:"Las cosas que perdimos en el fuego", autor:"Mariana Enríquez", editorial:"Anagrama", genero:"Cuentos y Relatos", cafe:"Café de la Esquina" },
-    { titulo:"La invención de Morel", autor:"Adolfo Bioy Casares", editorial:"Losada", genero:"Clásicos", cafe:"Café Belgrano" },
-    { titulo:"Bomarzo", autor:"Manuel Mujica Láinez", editorial:"Sudamericana", genero:"Ensayos e Historia", cafe:"Cigaló" },
-    { titulo:"Respiración artificial", autor:"Ricardo Piglia", editorial:"Anagrama", genero:"Ficción Moderna", cafe:"Café de la Esquina" },
-    { titulo:"El beso de la mujer araña", autor:"Manuel Puig", editorial:"Seix Barral", genero:"Novela Romántica", cafe:"Café Belgrano" },
-    { titulo:"La tregua", autor:"Mario Benedetti", editorial:"Alfaguara", genero:"Novela Romántica", cafe:"Cigaló" },
-    { titulo:"Nada", autor:"Carmen Laforet", editorial:"Destino", genero:"Clásicos", cafe:"Café de la Esquina" }
+    { titulo:"Cien años de soledad", autor:"Gabriel García Márquez", editorial:"Sudamericana", genero:"Clásicos", isbn:"9780307474728" },
+    { titulo:"Rayuela", autor:"Julio Cortázar", editorial:"Alfaguara", genero:"Ficción Moderna", isbn:"9788437604572" },
+    { titulo:"Ficciones", autor:"Jorge Luis Borges", editorial:"Emecé", genero:"Cuentos y Relatos" },
+    { titulo:"La casa de los espíritus", autor:"Isabel Allende", editorial:"Plaza & Janés", genero:"Ficción Moderna", isbn:"9788401337208" },
+    { titulo:"Los detectives salvajes", autor:"Roberto Bolaño", editorial:"Anagrama", genero:"Ficción Moderna" },
+    { titulo:"El túnel", autor:"Ernesto Sabato", editorial:"Seix Barral", genero:"Novela Policial" },
+    { titulo:"Pedro Páramo", autor:"Juan Rulfo", editorial:"Cátedra", genero:"Clásicos", isbn:"9788437604695" },
+    { titulo:"Aura", autor:"Carlos Fuentes", editorial:"Era", genero:"Fantasía juvenil" },
+    { titulo:"Trilce", autor:"César Vallejo", editorial:"", genero:"Cuentos y Relatos" },
+    { titulo:"Boquitas pintadas", autor:"Manuel Puig", editorial:"Seix Barral", genero:"Novela Romántica" },
+    { titulo:"Kentukis", autor:"Samanta Schweblin", editorial:"Random House", genero:"Ficción Moderna" },
+    { titulo:"Las cosas que perdimos en el fuego", autor:"Mariana Enríquez", editorial:"Anagrama", genero:"Cuentos y Relatos" },
+    { titulo:"La invención de Morel", autor:"Adolfo Bioy Casares", editorial:"Losada", genero:"Clásicos" },
+    { titulo:"Bomarzo", autor:"Manuel Mujica Láinez", editorial:"Sudamericana", genero:"Ensayos e Historia" },
+    { titulo:"Respiración artificial", autor:"Ricardo Piglia", editorial:"Anagrama", genero:"Ficción Moderna" },
+    { titulo:"El beso de la mujer araña", autor:"Manuel Puig", editorial:"Seix Barral", genero:"Novela Romántica" },
+    { titulo:"La tregua", autor:"Mario Benedetti", editorial:"Alfaguara", genero:"Novela Romántica" },
+    { titulo:"Nada", autor:"Carmen Laforet", editorial:"Destino", genero:"Clásicos" }
   ];
 
   let generoActivo = '';
-  let cafeActivo   = '';
-  let modoTodos    = false;
   const grid   = document.getElementById('grid');
   const qEl    = document.getElementById('q');
   const sortEl = document.getElementById('sort');
   const empty  = document.getElementById('empty');
   const countLine = document.getElementById('count-line');
   const genreRow  = document.getElementById('genre-row');
-  const cafeRow   = document.getElementById('cafe-row');
 
   document.getElementById('total-count').textContent = LIBROS.length;
-
-  // ── Toggle de vista previa (solo para esta demo — en la app real cada
-  //    modo vive en su propia URL: ?catalogo=slug vs ?catalogo=todos) ───
-  const tabCafe  = document.getElementById('tab-cafe');
-  const tabTodos = document.getElementById('tab-todos');
-
-  function setModoTodos(on){
-    modoTodos = on;
-    tabCafe.classList.toggle('on', !on);
-    tabTodos.classList.toggle('on', on);
-    document.getElementById('capabilities').hidden = on;
-    document.getElementById('actions').hidden = on;
-    document.getElementById('h1-cafe').textContent = on ? 'Todas las librerías' : 'Café de la Esquina';
-    cafeActivo = '';
-    if (on) armarFiltroCafes(); else cafeRow.hidden = true;
-    render();
-  }
-  tabCafe.addEventListener('click', () => setModoTodos(false));
-  tabTodos.addEventListener('click', () => setModoTodos(true));
-
-  function armarFiltroCafes(){
-    const cafes = Array.from(new Set(LIBROS.map(b => b.cafe).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es'));
-    cafeRow.hidden = false;
-    cafeRow.innerHTML = ['Todos los cafés'].concat(cafes).map((c, i) => `
-      <button type="button" class="cafe-chip ${i===0?'on':''}" data-c="${i===0?'':x(c)}">${x(c)}</button>
-    `).join('');
-    cafeRow.querySelectorAll('.cafe-chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        cafeActivo = chip.dataset.c;
-        cafeRow.querySelectorAll('.cafe-chip').forEach(c => c.classList.toggle('on', c === chip));
-        render();
-      });
-    });
-  }
 
   genreRow.innerHTML = ['Todos'].concat(GENEROS).map(g => {
     const on  = g === 'Todos';
