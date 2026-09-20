@@ -513,8 +513,7 @@
 
     let filtrados = LIBROS.filter(b =>
       (b.titulo.toLowerCase().includes(q) || b.autor.toLowerCase().includes(q)) &&
-      (!generoActivo || b.genero === generoActivo) &&
-      (!modoTodos || !cafeActivo || b.cafe === cafeActivo)
+      (!generoActivo || b.genero === generoActivo)
     );
 
     filtrados = filtrados.slice().sort((a, b) => {
@@ -522,7 +521,7 @@
       return apellido(a.autor).localeCompare(apellido(b.autor), 'es');
     });
 
-    countLine.textContent = (q || generoActivo || cafeActivo)
+    countLine.textContent = (q || generoActivo)
       ? filtrados.length + ' resultado' + (filtrados.length !== 1 ? 's' : '')
       : '';
 
@@ -546,7 +545,6 @@
           ${cover}
         </div>
         <div class="book-info">
-          ${modoTodos ? `<div class="cafe-tag">☕ ${x(b.cafe)}</div>` : ''}
           <div class="titulo">${x(b.titulo)}</div>
           <div class="autor">${x(b.autor)}</div>
           ${b.editorial ? `<div class="editorial">${x(b.editorial)}</div>` : ''}

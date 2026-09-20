@@ -60,17 +60,6 @@ function doGet(e) {
   const catParam = (params.catalogo || '').toLowerCase().trim();
 
 
-  if (catParam === 'todos') {
-    const tmpl = HtmlService.createTemplateFromFile('catalogo');
-    tmpl.cafeName   = 'Todas las librerías';
-    tmpl.cafeId     = '';
-    tmpl.modoTodos  = true;
-    return tmpl.evaluate()
-      .setTitle('Catálogo · Todas las librerías')
-      .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
-  }
-
-
   const esCatalogo = !!catParam;
   const slug = esCatalogo ? catParam : (params.cafe || '').toLowerCase().trim();
   const cafe = slug ? getCafeBySlug_(slug) : null;
@@ -86,9 +75,8 @@ function doGet(e) {
 
 
   const tmpl = HtmlService.createTemplateFromFile(esCatalogo ? 'catalogo' : 'index');
-  tmpl.cafeName  = cafe.nombre;
-  tmpl.cafeId    = String(cafe.id);
-  tmpl.modoTodos = false;
+  tmpl.cafeName = cafe.nombre;
+  tmpl.cafeId   = String(cafe.id);
 
 
   return tmpl.evaluate()
@@ -121,32 +109,6 @@ function getStockPublico(cafeId) {
       autor:     String(r.autor     || ''),
       editorial: String(r.editorial || ''),
       genero:    String(r.genero    || '')
-    }));
-}
-
-
-// Catálogo público combinado: stock de todos los cafés activos juntos,
-// con el nombre del café para poder filtrar en el frontend.
-function getStockPublicoTodos() {
-  const cafesPorId = {};
-  getRows_('Cafés')
-    .filter(c => String(c.activo).toLowerCase() === 'true')
-    .forEach(c => { cafesPorId[String(c.id)] = String(c.nombre); });
-
-
-  return getRows_('Stock')
-    .filter(r =>
-      r.ubicacion === 'en_cafe' &&
-      !r.id_encargo &&
-      cafesPorId[String(r.id_cafe)]
-    )
-    .map(r => ({
-      isbn:      String(r.isbn      || ''),
-      titulo:    String(r.titulo    || ''),
-      autor:     String(r.autor     || ''),
-      editorial: String(r.editorial || ''),
-      genero:    String(r.genero    || ''),
-      cafe:      cafesPorId[String(r.id_cafe)]
     }));
 }
 
