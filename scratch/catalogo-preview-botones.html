@@ -1,0 +1,686 @@
+<title>Botones Bookbuster</title>
+<meta name="description" content="Vista previa del catálogo con las píldoras de género y los botones de abajo más chicos y del mismo tamaño.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wdth,wght@8..144,25..151,100..1000&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FCE7FC;
+    --surface:#FFFFFF;
+    --ink:#000000;
+    --muted:#6C6E82;
+    --accent:#5767F6;
+    --accent-ink:#FFFFFF;
+    --cta:#F96215;
+    --cta-ink:#FFFFFF;
+    --line:#E7E7F0;
+    --highlight:#FBFF1F;
+    --highlight-ink:#000000;
+    --error:#F8271C;
+    --error-bg:#FDEAE8;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#160D16;
+      --surface:#221527;
+      --ink:#FFFFFF;
+      --muted:#9A9CB5;
+      --accent:#8B96FF;
+      --accent-ink:#0A0A0F;
+      --cta:#FF8A4D;
+      --cta-ink:#0A0A0F;
+      --line:#2A2A38;
+      --highlight:#FBFF1F;
+      --highlight-ink:#000000;
+      --error:#FF6B60;
+      --error-bg:#3A1815;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#160D16;
+    --surface:#221527;
+    --ink:#FFFFFF;
+    --muted:#9A9CB5;
+    --accent:#8B96FF;
+    --accent-ink:#0A0A0F;
+    --cta:#FF8A4D;
+    --cta-ink:#0A0A0F;
+    --line:#2A2A38;
+    --highlight:#FBFF1F;
+    --highlight-ink:#000000;
+    --error:#FF6B60;
+    --error-bg:#3A1815;
+  }
+
+  *,*::before,*::after{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Roboto Flex',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-optical-sizing:auto;
+    padding-inline:16px;
+    padding-block:20px 40px;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding-bottom:104px;}
+
+  .preview-pill{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:.72rem;font-weight:600;letter-spacing:.02em;
+    color:var(--muted);background:var(--surface);
+    border:1px solid var(--line);border-radius:100px;
+    padding:4px 10px;margin-bottom:18px;
+  }
+  .preview-pill::before{content:'●';color:var(--accent);font-size:.55rem;}
+
+  header.cafe{margin-bottom:22px;}
+  .kicker{
+    display:inline-block;
+    font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em;
+    color:var(--highlight-ink);background:var(--highlight);
+    padding:2px 8px;border-radius:4px;margin-bottom:10px;
+  }
+  h1{
+    font-family:'Roboto Flex',sans-serif;
+    font-weight:800;
+    font-variation-settings:'wght' 800,'wdth' 92,'opsz' 144;
+    text-transform:uppercase;
+    font-size:clamp(1.9rem,7vw,2.7rem);
+    line-height:1.02;
+    letter-spacing:-.01em;
+    margin:0 0 10px;
+    color:var(--accent);
+    text-wrap:balance;
+  }
+  .cafe-meta{
+    display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+    color:var(--muted);font-size:.88rem;font-weight:500;
+  }
+  .cafe-meta .count strong{color:var(--ink);font-weight:800;font-variant-numeric:tabular-nums;}
+  .dot{width:3px;height:3px;border-radius:50%;background:var(--muted);flex-shrink:0;}
+
+  .capabilities{
+    display:grid;grid-template-columns:1fr 1fr;gap:12px 10px;
+    margin:0 0 22px;
+  }
+  .cap{display:flex;gap:8px;align-items:flex-start;}
+  .cap-ico{
+    width:30px;height:30px;border-radius:8px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:1rem;
+  }
+  .cap-title{font-size:.82rem;font-weight:800;line-height:1.2;}
+  .cap-desc{font-size:.72rem;color:var(--muted);line-height:1.3;font-weight:500;margin-top:1px;}
+
+  .controls{
+    display:flex;gap:8px;margin:18px 0 20px;
+    position:sticky;top:env(safe-area-inset-top,0px);
+    padding-block:8px;background:var(--bg);
+    z-index:5;
+  }
+  .search-wrap{position:relative;flex:1;min-width:0;}
+  .search-wrap svg{
+    position:absolute;left:12px;top:50%;transform:translateY(-50%);
+    width:16px;height:16px;color:var(--muted);pointer-events:none;
+  }
+  input[type=search]{
+    width:100%;padding:10px 12px 10px 36px;
+    border:1.5px solid var(--line);border-radius:10px;
+    background:var(--surface);color:var(--ink);
+    font-size:.92rem;font-family:inherit;font-weight:500;
+  }
+  input[type=search]:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  input[type=search]::placeholder{color:var(--muted);font-weight:400;}
+
+  select{
+    border:1.5px solid var(--line);border-radius:10px;
+    background:var(--surface);color:var(--ink);
+    font-size:.85rem;font-family:inherit;font-weight:600;
+    padding:0 30px 0 12px;
+    appearance:none;-webkit-appearance:none;
+    background-repeat:no-repeat;background-position:right 12px center;
+  }
+  select:focus{outline:2px solid var(--accent);outline-offset:1px;}
+
+  .genre-row{
+    display:flex;flex-wrap:wrap;gap:5px;margin:0 0 14px;
+  }
+  .genre-chip{
+    flex-shrink:0;display:inline-flex;align-items:center;gap:5px;
+    border:1.5px solid var(--line);border-radius:100px;
+    background:var(--surface);color:var(--ink);
+    font-family:inherit;font-size:.72rem;font-weight:700;
+    padding:5px 10px;cursor:pointer;white-space:nowrap;
+    height:26px;
+  }
+  .genre-chip .swatch{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .genre-chip.on{border-color:transparent;}
+  .genre-chip.on .swatch{display:none;}
+
+  #count-line{
+    font-size:.82rem;color:var(--muted);margin-bottom:12px;font-weight:600;
+    font-variant-numeric:tabular-nums;
+  }
+
+  #grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+    gap:10px;
+  }
+  .book{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:10px;
+    display:flex;gap:10px;align-items:flex-start;
+  }
+  .book-cover{
+    position:relative;flex-shrink:0;
+    width:50px;height:75px;border-radius:5px;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.3rem;
+  }
+  .book-cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .book-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+  .book .titulo{
+    font-family:'Roboto Flex',sans-serif;
+    font-weight:700;font-variation-settings:'wght' 700;
+    font-size:1rem;line-height:1.28;
+    display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+    overflow:hidden;
+    min-height:calc(1.28em * 2);
+  }
+  .book .autor{
+    font-size:.86rem;font-weight:600;color:var(--accent);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .book .editorial{
+    font-size:.78rem;color:var(--muted);font-weight:500;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .book .genero{
+    align-self:flex-start;margin-top:4px;
+    font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
+    padding:2px 7px;border-radius:5px;
+  }
+
+  #empty{display:none;text-align:center;padding:48px 16px;color:var(--muted);}
+  #empty .e{font-size:2rem;margin-bottom:8px;}
+
+  footer{
+    margin-top:36px;padding-top:18px;border-top:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    flex-wrap:wrap;
+  }
+  footer p{margin:0;font-size:.8rem;color:var(--muted);font-weight:500;max-width:38ch;}
+  .powered{
+    font-size:.74rem;color:var(--muted);white-space:nowrap;font-weight:500;
+    display:flex;align-items:center;gap:5px;
+  }
+  .powered b{color:var(--accent);font-weight:800;}
+
+  .actions{
+    position:fixed;left:0;right:0;bottom:0;
+    max-width:760px;margin:0 auto;
+    display:grid;grid-template-columns:1fr 1fr;gap:6px;
+    padding:8px 16px calc(8px + env(safe-area-inset-bottom,0px));
+    background:var(--surface);
+    border-top:1px solid var(--line);
+    box-shadow:0 -6px 18px rgba(0,0,0,.12);
+    z-index:15;
+  }
+  .action-btn{
+    display:flex;align-items:center;justify-content:center;gap:5px;
+    border:none;border-radius:9px;
+    height:40px;
+    font-family:inherit;font-size:.72rem;font-weight:800;
+    text-align:center;text-decoration:none;cursor:pointer;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .action-btn:active{opacity:.85;}
+
+  dialog{
+    border:none;border-radius:14px 14px 0 0;
+    padding:0;margin:auto 0 0;
+    width:100%;max-width:460px;
+    background:var(--surface);color:var(--ink);
+    box-shadow:0 -8px 30px rgba(0,0,0,.2);
+  }
+  @media (min-width:520px){
+    dialog{border-radius:14px;margin:auto;}
+  }
+  dialog::backdrop{background:rgba(0,0,0,.5);}
+  .sheet{padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));}
+  .sheet-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:4px;}
+  .sheet-head h2{
+    font-family:'Roboto Flex',sans-serif;font-weight:800;
+    font-variation-settings:'wght' 800;
+    text-transform:uppercase;
+    font-size:1.25rem;margin:0;color:var(--accent);
+  }
+  .sheet-head p{margin:4px 0 0;font-size:.85rem;color:var(--muted);font-weight:500;}
+  .x-btn{
+    background:none;border:none;color:var(--muted);font-size:1.3rem;line-height:1;
+    cursor:pointer;padding:2px 4px;flex-shrink:0;
+  }
+  .field{margin-top:14px;}
+  .field label{display:block;font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+  .field textarea,.field input[type=text],.field input[type=tel]{
+    width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;
+    background:var(--bg);color:var(--ink);font-size:.92rem;font-family:inherit;font-weight:500;
+  }
+  .field textarea{min-height:72px;resize:vertical;}
+  .field textarea:focus,.field input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .sheet-err{
+    display:none;margin-top:12px;font-size:.82rem;font-weight:600;color:var(--error);
+    background:var(--error-bg);border:1px solid var(--error);border-radius:8px;padding:8px 10px;
+  }
+  .sheet-submit{
+    width:100%;margin-top:16px;padding:12px;border:none;border-radius:10px;
+    background:var(--cta);color:var(--cta-ink);font-size:.95rem;font-weight:800;
+    font-family:inherit;cursor:pointer;
+  }
+  .sheet-submit:disabled{opacity:.55;cursor:default;}
+  .sheet-ok{display:none;text-align:center;padding:8px 4px 4px;}
+  .sheet-ok .ico{font-size:2.2rem;margin-bottom:6px;}
+  .sheet-ok p{margin:0;font-size:.92rem;color:var(--accent);font-weight:700;}
+  .sheet-ok .close-ok{
+    margin-top:16px;width:100%;padding:11px;border-radius:10px;
+    border:1.5px solid var(--line);background:none;color:var(--ink);
+    font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;
+  }
+</style>
+
+<div class="wrap">
+
+  <span class="preview-pill">Vista previa — datos de ejemplo</span>
+
+  <header class="cafe">
+    <span class="kicker">Catálogo Bookbuster</span>
+    <h1>Café de la Esquina</h1>
+    <div class="cafe-meta">
+      <span class="count"><strong id="total-count">0</strong> libros disponibles hoy</span>
+      <span class="dot"></span>
+      <span>Actualizado en el momento</span>
+    </div>
+  </header>
+
+  <div class="capabilities">
+    <div class="cap">
+      <span class="cap-ico" style="background:#5767F6">📖</span>
+      <div>
+        <div class="cap-title">Leé acá</div>
+        <div class="cap-desc">Sentate con cualquier libro del catálogo.</div>
+      </div>
+    </div>
+    <div class="cap">
+      <span class="cap-ico" style="background:#F96215">🛒</span>
+      <div>
+        <div class="cap-title">Comprá</div>
+        <div class="cap-desc">Llevate a casa el que más te guste.</div>
+      </div>
+    </div>
+    <div class="cap">
+      <span class="cap-ico" style="background:#FBFF1F">📩</span>
+      <div>
+        <div class="cap-title">Encargá</div>
+        <div class="cap-desc">Pedí cualquier libro. Llega al café sin costo de envío.</div>
+      </div>
+    </div>
+    <div class="cap">
+      <span class="cap-ico" style="background:#F8A9F8">💰</span>
+      <div>
+        <div class="cap-title">Vendé tus libros</div>
+        <div class="cap-desc">Traé los que ya leíste a este café.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="search" id="q" placeholder="Buscar por título o autor…" autocomplete="off">
+    </div>
+    <select id="sort">
+      <option value="autor">Por autor</option>
+      <option value="titulo">Por título</option>
+    </select>
+  </div>
+
+  <div class="genre-row" id="genre-row"></div>
+
+  <p id="count-line"></p>
+
+  <div id="grid"></div>
+
+  <div id="empty">
+    <div class="e">📭</div>
+    <p>No encontramos ningún libro con eso.</p>
+  </div>
+
+  <div class="actions">
+    <button type="button" class="action-btn" id="btn-pedir" style="background:var(--accent);color:var(--accent-ink)">📩 Pedir un libro</button>
+    <button type="button" class="action-btn" id="btn-vender" style="background:var(--cta);color:var(--cta-ink)">💰 Vender mis libros</button>
+    <button type="button" class="action-btn" id="btn-hablar" style="background:#000;color:#fff">💬 Hablar con Bookbuster</button>
+    <a class="action-btn" href="https://www.instagram.com/bookbuster.club/" target="_blank" rel="noopener" style="background:var(--highlight);color:var(--highlight-ink)">📸 Seguinos en Instagram</a>
+  </div>
+
+  <footer>
+    <span class="powered">Catálogo por <b>Bookbuster</b></span>
+  </footer>
+
+</div>
+
+<dialog id="dlg-encargo">
+  <div class="sheet">
+    <form id="form-encargo">
+      <div class="sheet-head">
+        <div>
+          <h2 id="enc-titulo">Pedir un libro</h2>
+          <p id="enc-sub">Se lo pasamos directo a Bookbuster.</p>
+        </div>
+        <button type="button" class="x-btn" id="btn-close-x" aria-label="Cerrar">✕</button>
+      </div>
+
+      <div class="field">
+        <label for="f-desc" id="enc-label">¿Qué libro necesitás?</label>
+        <textarea id="f-desc" placeholder="Título, autor, o cualquier detalle que tengas..." required></textarea>
+      </div>
+      <div class="field">
+        <label for="f-nombre">Tu nombre</label>
+        <input type="text" id="f-nombre" placeholder="Nombre y apellido" autocomplete="off" required>
+      </div>
+      <div class="field">
+        <label for="f-wsp">WhatsApp (opcional)</label>
+        <input type="tel" id="f-wsp" placeholder="11 1234-5678" autocomplete="off" inputmode="tel">
+      </div>
+
+      <div class="sheet-err" id="sheet-err"></div>
+
+      <button type="submit" class="sheet-submit" id="btn-submit">📩 Enviar pedido</button>
+    </form>
+
+    <div class="sheet-ok" id="sheet-ok">
+      <div class="ico">✅</div>
+      <p id="enc-ok-msg">¡Pedido enviado! Bookbuster se va a contactar apenas lo tenga.</p>
+      <button class="close-ok" id="btn-close-ok">Cerrar</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dlg-contacto">
+  <div class="sheet">
+    <form id="form-contacto">
+      <div class="sheet-head">
+        <div>
+          <h2>Hablar con Bookbuster</h2>
+          <p>Te leemos y te contactamos si hace falta.</p>
+        </div>
+        <button type="button" class="x-btn" id="btn-close-x2" aria-label="Cerrar">✕</button>
+      </div>
+
+      <div class="field">
+        <label for="c-msg">Tu mensaje</label>
+        <textarea id="c-msg" placeholder="Contanos qué necesitás..." required></textarea>
+      </div>
+      <div class="field">
+        <label for="c-nombre">Tu nombre</label>
+        <input type="text" id="c-nombre" placeholder="Nombre y apellido" autocomplete="off" required>
+      </div>
+      <div class="field">
+        <label for="c-wsp">WhatsApp (opcional)</label>
+        <input type="tel" id="c-wsp" placeholder="11 1234-5678" autocomplete="off" inputmode="tel">
+      </div>
+
+      <div class="sheet-err" id="sheet-err2"></div>
+
+      <button type="submit" class="sheet-submit" id="btn-submit2" style="background:#000">💬 Enviar mensaje</button>
+    </form>
+
+    <div class="sheet-ok" id="sheet-ok2">
+      <div class="ico">✅</div>
+      <p>¡Mensaje enviado! Bookbuster te lee y te contacta si hace falta.</p>
+      <button class="close-ok" id="btn-close-ok2">Cerrar</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  const GENERO_COLOR = {
+    'Ficción Moderna':        { bg:'#5767F6', ink:'#FFFFFF' },
+    'Novela Policial':        { bg:'#F8271C', ink:'#FFFFFF' },
+    'Novela Romántica':       { bg:'#F8A9F8', ink:'#000000' },
+    'Fantasía juvenil':       { bg:'#9B5DE5', ink:'#FFFFFF' },
+    'Cuentos y Relatos':      { bg:'#FBFF1F', ink:'#000000' },
+    'Clásicos':               { bg:'#2E7D32', ink:'#FFFFFF' },
+    'Ensayos e Historia':     { bg:'#F96215', ink:'#FFFFFF' },
+    'Biografías y Crónicas':  { bg:'#00B4B4', ink:'#FFFFFF' },
+    'Autoayuda':              { bg:'#FFB703', ink:'#000000' },
+    'Negocios':               { bg:'#6B4423', ink:'#FFFFFF' }
+  };
+  const GENEROS = Object.keys(GENERO_COLOR);
+  const COLOR_DEFAULT = { bg:'#E7E7F0', ink:'#000000' };
+
+  const LIBROS = [
+    { titulo:"Cien años de soledad", autor:"Gabriel García Márquez", editorial:"Sudamericana", genero:"Clásicos", isbn:"9780307474728" },
+    { titulo:"El amor en los tiempos del cólera y otros relatos completos de juventud", autor:"Gabriel García Márquez", editorial:"Sudamericana", genero:"Novela Romántica" },
+    { titulo:"Historia de la eternidad, seguida de otros ensayos sobre el tiempo y el infinito", autor:"Jorge Luis Borges", editorial:"Emecé", genero:"Ensayos e Historia" },
+    { titulo:"Rayuela", autor:"Julio Cortázar", editorial:"Alfaguara", genero:"Ficción Moderna", isbn:"9788437604572" },
+    { titulo:"Ficciones", autor:"Jorge Luis Borges", editorial:"Emecé", genero:"Cuentos y Relatos" },
+    { titulo:"La casa de los espíritus", autor:"Isabel Allende", editorial:"Plaza & Janés", genero:"Ficción Moderna", isbn:"9788401337208" },
+    { titulo:"Los detectives salvajes", autor:"Roberto Bolaño", editorial:"Anagrama", genero:"Ficción Moderna" },
+    { titulo:"El túnel", autor:"Ernesto Sabato", editorial:"Seix Barral", genero:"Novela Policial" },
+    { titulo:"Pedro Páramo", autor:"Juan Rulfo", editorial:"Cátedra", genero:"Clásicos", isbn:"9788437604695" },
+    { titulo:"Aura", autor:"Carlos Fuentes", editorial:"Era", genero:"Fantasía juvenil" },
+    { titulo:"Trilce", autor:"César Vallejo", editorial:"", genero:"Cuentos y Relatos" },
+    { titulo:"Boquitas pintadas", autor:"Manuel Puig", editorial:"Seix Barral", genero:"Novela Romántica" },
+    { titulo:"Kentukis", autor:"Samanta Schweblin", editorial:"Random House", genero:"Ficción Moderna" },
+    { titulo:"Las cosas que perdimos en el fuego", autor:"Mariana Enríquez", editorial:"Anagrama", genero:"Cuentos y Relatos" },
+    { titulo:"La invención de Morel", autor:"Adolfo Bioy Casares", editorial:"Losada", genero:"Clásicos" },
+    { titulo:"Bomarzo", autor:"Manuel Mujica Láinez", editorial:"Sudamericana", genero:"Ensayos e Historia" },
+    { titulo:"Respiración artificial", autor:"Ricardo Piglia", editorial:"Anagrama", genero:"Ficción Moderna" },
+    { titulo:"El beso de la mujer araña", autor:"Manuel Puig", editorial:"Seix Barral", genero:"Novela Romántica" },
+    { titulo:"La tregua", autor:"Mario Benedetti", editorial:"Alfaguara", genero:"Novela Romántica" },
+    { titulo:"Nada", autor:"Carmen Laforet", editorial:"Destino", genero:"Clásicos" }
+  ];
+
+  let generoActivo = '';
+  const grid   = document.getElementById('grid');
+  const qEl    = document.getElementById('q');
+  const sortEl = document.getElementById('sort');
+  const empty  = document.getElementById('empty');
+  const countLine = document.getElementById('count-line');
+  const genreRow  = document.getElementById('genre-row');
+
+  document.getElementById('total-count').textContent = LIBROS.length;
+
+  genreRow.innerHTML = ['Todos'].concat(GENEROS).map(g => {
+    const on  = g === 'Todos';
+    const col = on ? { bg:'var(--accent)', ink:'var(--accent-ink)' } : GENERO_COLOR[g];
+    return `
+    <button type="button" class="genre-chip ${on?'on':''}" data-g="${on?'':x(g)}"
+      style="${on?`background:${col.bg};color:${col.ink}`:''}">
+      <span class="swatch" style="background:${GENERO_COLOR[g] ? GENERO_COLOR[g].bg : ''}"></span>${x(g)}
+    </button>`;
+  }).join('');
+  genreRow.querySelectorAll('.genre-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      generoActivo = chip.dataset.g;
+      const col = generoActivo ? GENERO_COLOR[generoActivo] : { bg:'var(--accent)', ink:'var(--accent-ink)' };
+      genreRow.querySelectorAll('.genre-chip').forEach(c => {
+        const activo = c === chip;
+        c.classList.toggle('on', activo);
+        c.style.background = activo ? col.bg : '';
+        c.style.color      = activo ? col.ink : '';
+      });
+      render();
+    });
+  });
+
+  function apellido(autor){
+    const partes = autor.trim().split(' ');
+    return partes[partes.length - 1].toLowerCase();
+  }
+
+  function x(s){
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function render(){
+    const q = qEl.value.trim().toLowerCase();
+    const modo = sortEl.value;
+
+    let filtrados = LIBROS.filter(b =>
+      (b.titulo.toLowerCase().includes(q) || b.autor.toLowerCase().includes(q)) &&
+      (!generoActivo || b.genero === generoActivo)
+    );
+
+    filtrados = filtrados.slice().sort((a, b) => {
+      if (modo === 'titulo') return a.titulo.localeCompare(b.titulo, 'es');
+      return apellido(a.autor).localeCompare(apellido(b.autor), 'es');
+    });
+
+    countLine.textContent = (q || generoActivo)
+      ? filtrados.length + ' resultado' + (filtrados.length !== 1 ? 's' : '')
+      : '';
+
+    if (!filtrados.length){
+      grid.hidden = true;
+      empty.style.display = '';
+      return;
+    }
+    grid.hidden = false;
+    empty.style.display = 'none';
+
+    grid.innerHTML = filtrados.map((b) => {
+      const col = GENERO_COLOR[b.genero] || COLOR_DEFAULT;
+      const cover = b.isbn
+        ? `<img src="https://covers.openlibrary.org/b/isbn/${encodeURIComponent(b.isbn)}-M.jpg?default=false" alt="" loading="lazy" onerror="this.remove()">`
+        : '';
+      return `
+      <div class="book">
+        <div class="book-cover" style="background:${col.bg};color:${col.ink}">
+          <span>📖</span>
+          ${cover}
+        </div>
+        <div class="book-info">
+          <div class="titulo">${x(b.titulo)}</div>
+          <div class="autor">${x(b.autor)}</div>
+          ${b.editorial ? `<div class="editorial">${x(b.editorial)}</div>` : ''}
+          ${b.genero ? `<div class="genero" style="background:${col.bg};color:${col.ink}">${x(b.genero)}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  qEl.addEventListener('input', render);
+  sortEl.addEventListener('change', render);
+  render();
+
+  // ── Pedir / Vender (mock — la versión real llama a registrarEncargo con
+  //    canal:'web' y tipo:'compra'|'venta', que ya notifica por Telegram
+  //    distinguiendo cada caso) ────────────────────────────────────────
+  const COPY_ENCARGO = {
+    compra: {
+      titulo: 'Pedir un libro', sub: 'Se lo pasamos directo a Bookbuster.',
+      label: '¿Qué libro necesitás?', placeholder: 'Título, autor, o cualquier detalle que tengas...',
+      btn: '📩 Enviar pedido', ok: '¡Pedido enviado! Bookbuster se va a contactar apenas lo tenga.'
+    },
+    venta: {
+      titulo: 'Vender tus libros', sub: 'Te contactamos por WhatsApp para coordinar.',
+      label: '¿Qué libros querés vender?', placeholder: 'Pasanos título y autor de todos los que quieras...',
+      btn: '💰 Enviar', ok: '¡Listo! Bookbuster te contacta por WhatsApp para coordinar.'
+    }
+  };
+
+  const dlg      = document.getElementById('dlg-encargo');
+  const form     = document.getElementById('form-encargo');
+  const sheetErr = document.getElementById('sheet-err');
+  const sheetOk  = document.getElementById('sheet-ok');
+  const btnSubmit = document.getElementById('btn-submit');
+  let modoEncargo = 'compra';
+
+  function abrirEncargo(modo){
+    modoEncargo = modo;
+    const c = COPY_ENCARGO[modo];
+    document.getElementById('enc-titulo').textContent = c.titulo;
+    document.getElementById('enc-sub').textContent     = c.sub;
+    document.getElementById('enc-label').textContent   = c.label;
+    document.getElementById('f-desc').placeholder      = c.placeholder;
+    btnSubmit.textContent = c.btn;
+    form.hidden = false;
+    sheetOk.style.display = 'none';
+    sheetErr.style.display = 'none';
+    dlg.showModal();
+  }
+  function cerrarEncargo(){ dlg.close(); }
+
+  document.getElementById('btn-pedir').addEventListener('click', () => abrirEncargo('compra'));
+  document.getElementById('btn-vender').addEventListener('click', () => abrirEncargo('venta'));
+  document.getElementById('btn-close-x').addEventListener('click', cerrarEncargo);
+  document.getElementById('btn-close-ok').addEventListener('click', cerrarEncargo);
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) cerrarEncargo(); });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const c      = COPY_ENCARGO[modoEncargo];
+    const desc   = document.getElementById('f-desc').value.trim();
+    const nombre = document.getElementById('f-nombre').value.trim();
+
+    if (!desc)   { sheetErr.textContent = 'Contanos qué libro(s) buscás.'; sheetErr.style.display = ''; return; }
+    if (!nombre) { sheetErr.textContent = 'Ingresá tu nombre.'; sheetErr.style.display = ''; return; }
+    sheetErr.style.display = 'none';
+
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Enviando...';
+
+    setTimeout(() => {
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = c.btn;
+      document.getElementById('enc-ok-msg').textContent = c.ok;
+      form.hidden = true;
+      sheetOk.style.display = '';
+      form.reset();
+    }, 600);
+  });
+
+  // ── Hablar con Bookbuster (mock) ────────────────────────────────────
+  const dlg2      = document.getElementById('dlg-contacto');
+  const form2     = document.getElementById('form-contacto');
+  const sheetErr2 = document.getElementById('sheet-err2');
+  const sheetOk2  = document.getElementById('sheet-ok2');
+  const btnSubmit2 = document.getElementById('btn-submit2');
+
+  function abrirContacto(){
+    form2.hidden = false;
+    sheetOk2.style.display = 'none';
+    sheetErr2.style.display = 'none';
+    dlg2.showModal();
+  }
+  function cerrarContacto(){ dlg2.close(); }
+
+  document.getElementById('btn-hablar').addEventListener('click', abrirContacto);
+  document.getElementById('btn-close-x2').addEventListener('click', cerrarContacto);
+  document.getElementById('btn-close-ok2').addEventListener('click', cerrarContacto);
+  dlg2.addEventListener('click', (e) => { if (e.target === dlg2) cerrarContacto(); });
+
+  form2.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const msg    = document.getElementById('c-msg').value.trim();
+    const nombre = document.getElementById('c-nombre').value.trim();
+
+    if (!msg)    { sheetErr2.textContent = 'Escribí tu mensaje.'; sheetErr2.style.display = ''; return; }
+    if (!nombre) { sheetErr2.textContent = 'Ingresá tu nombre.'; sheetErr2.style.display = ''; return; }
+    sheetErr2.style.display = 'none';
+
+    btnSubmit2.disabled = true;
+    btnSubmit2.textContent = 'Enviando...';
+
+    setTimeout(() => {
+      btnSubmit2.disabled = false;
+      btnSubmit2.textContent = '💬 Enviar mensaje';
+      form2.hidden = true;
+      sheetOk2.style.display = '';
+      form2.reset();
+    }, 600);
+  });
+</script>
