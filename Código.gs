@@ -97,6 +97,7 @@ function getStockCafe(cafeId) {
 // Para el catálogo público: solo lo que un visitante debería ver.
 // Sin modalidad, costo_firme ni ningún otro dato interno del negocio.
 function getStockPublico(cafeId) {
+  const generoPorIsbn = getGeneroCatalogoPorIsbn_();
   return getRows_('Stock')
     .filter(r =>
       String(r.id_cafe) === String(cafeId) &&
@@ -108,8 +109,25 @@ function getStockPublico(cafeId) {
       titulo:    String(r.titulo    || ''),
       autor:     String(r.autor     || ''),
       editorial: String(r.editorial || ''),
-      genero:    String(r.genero    || '')
+      genero:    String(r.genero || generoPorIsbn[normalizarIsbn_(r.isbn)] || '')
     }));
+}
+
+
+// Los ejemplares en Stock cargados antes de que existiera la columna
+// "genero" (migrarGenero) quedaron con ese campo vacío. Como fallback,
+// buscamos el género del mismo libro en el Catálogo por ISBN.
+function normalizarIsbn_(isbn) {
+  return String(isbn || '').replace(/\D/g, '');
+}
+
+function getGeneroCatalogoPorIsbn_() {
+  const map = {};
+  getRows_('Catálogo').forEach(r => {
+    const isbn = normalizarIsbn_(r.isbn);
+    if (isbn && r.genero) map[isbn] = String(r.genero);
+  });
+  return map;
 }
 
 
