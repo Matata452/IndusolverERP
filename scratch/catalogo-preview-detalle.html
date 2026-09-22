@@ -668,13 +668,24 @@
 
     const resumenWrap = document.getElementById('lib-resumen-wrap');
     if (b.resumen){
-      document.getElementById('lib-resumen').textContent = b.resumen;
+      document.getElementById('lib-resumen').innerHTML = formatearResumen(b.resumen);
       resumenWrap.hidden = false;
     } else {
       resumenWrap.hidden = true;
     }
 
     dlgLibro.showModal();
+  }
+
+  // Primera oración en negrita (el gancho), última en itálica (como un
+  // comentario de boca en boca), el resto sin formato.
+  function formatearResumen(texto){
+    const oraciones = (texto.match(/[^.!?]+[.!?]+/g) || [texto]).map(s => s.trim()).filter(Boolean);
+    if (oraciones.length < 2) return x(texto);
+    const primera = oraciones[0];
+    const ultima  = oraciones[oraciones.length - 1];
+    const medio   = oraciones.slice(1, -1).join(' ');
+    return `<b>${x(primera)}</b>` + (medio ? ` ${x(medio)}` : '') + ` <i>${x(ultima)}</i>`;
   }
 
   grid.addEventListener('click', (e) => {
