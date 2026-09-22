@@ -318,6 +318,9 @@
     color:var(--accent);margin-bottom:5px;
   }
   .libro-resumen p{margin:0;font-size:.8rem;line-height:1.45;color:var(--ink);}
+  .libro-resumen ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;}
+  .libro-resumen li{display:flex;gap:7px;align-items:baseline;font-size:.8rem;line-height:1.4;color:var(--ink);}
+  .libro-resumen li .num{flex-shrink:0;font-weight:800;color:var(--accent);}
 </style>
 
 <div class="wrap">
@@ -457,7 +460,7 @@
 
     <div class="libro-resumen" id="lib-resumen-wrap" hidden>
       <div class="libro-resumen-label">Por qué leerlo</div>
-      <p id="lib-resumen"></p>
+      <ol id="lib-resumen"></ol>
     </div>
   </div>
 </dialog>
@@ -677,15 +680,10 @@
     dlgLibro.showModal();
   }
 
-  // Primera oración en negrita (el gancho), última en itálica (como un
-  // comentario de boca en boca), el resto sin formato.
+  // Cada oración numerada como un punto de la lista.
   function formatearResumen(texto){
     const oraciones = (texto.match(/[^.!?]+[.!?]+/g) || [texto]).map(s => s.trim()).filter(Boolean);
-    if (oraciones.length < 2) return x(texto);
-    const primera = oraciones[0];
-    const ultima  = oraciones[oraciones.length - 1];
-    const medio   = oraciones.slice(1, -1).join(' ');
-    return `<b>${x(primera)}</b>` + (medio ? ` ${x(medio)}` : '') + ` <i>${x(ultima)}</i>`;
+    return oraciones.map((s, i) => `<li><span class="num">${i + 1}.</span>${x(s)}</li>`).join('');
   }
 
   grid.addEventListener('click', (e) => {
