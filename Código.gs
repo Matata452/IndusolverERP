@@ -144,7 +144,7 @@ function registrarVenta(payload) {
   if (!lock.tryLock(10000)) return { ok: false, error: 'Sistema ocupado, intentá de nuevo.' };
   try {
     const esDonacion    = payload.modalidad === 'donacion';
-    const comisionPct   = payload.tipoVenta === 'personal' ? 0 : (payload.modalidad === 'firme' ? 30 : (esDonacion ? 40 : 20));
+    const comisionPct   = payload.tipoVenta === 'personal' ? 0 : (payload.modalidad === 'firme' ? 30 : 20);
     const comisionMonto = Math.round(payload.precioFinal * comisionPct / 100);
     const id            = newId_('V');
 
@@ -184,7 +184,7 @@ function registrarVenta(payload) {
     }
 
 
-    const donanteMonto = esDonacion ? Math.round(payload.pvp * 0.2) : 0;
+    const donanteMonto = esDonacion ? Math.round(payload.precioFinal * 0.6) : 0;
 
     notificarTelegram_(
       (esDonacion ? '💰 <b>Nueva venta (📦 donación)</b>\n' : '💰 <b>Nueva venta</b>\n') +
