@@ -135,7 +135,10 @@
     border-radius:8px;
     padding:10px;
     display:flex;gap:10px;align-items:flex-start;
+    cursor:pointer;
+    transition:border-color .12s;
   }
+  .book:active{opacity:.85;}
   .book-cover{
     position:relative;flex-shrink:0;
     width:50px;height:75px;border-radius:5px;overflow:hidden;
@@ -252,6 +255,35 @@
     border:1.5px solid var(--line);background:none;color:var(--ink);
     font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;
   }
+
+  .libro-sheet{padding-top:16px;}
+  .libro-detalle{display:flex;gap:14px;align-items:flex-start;margin-top:2px;}
+  .libro-cover{
+    position:relative;flex-shrink:0;
+    width:90px;height:135px;border-radius:8px;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    font-size:2.2rem;
+  }
+  .libro-cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .libro-meta{flex:1;min-width:0;padding-top:2px;}
+  .lib-editorial{font-size:.85rem;color:var(--muted);font-weight:500;margin-bottom:8px;}
+  .libro-meta .genero{
+    display:inline-block;
+    font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
+    padding:3px 8px;border-radius:5px;
+  }
+  .libro-resumen{
+    margin-top:16px;padding:12px 14px;border-radius:10px;
+    background:var(--bg);border-left:3px solid var(--accent);
+  }
+  .libro-resumen-label{
+    font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--accent);margin-bottom:5px;
+  }
+  .libro-resumen ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;}
+  .libro-resumen li{display:flex;gap:7px;align-items:baseline;font-size:.8rem;line-height:1.4;color:var(--ink);}
+  .libro-resumen li .num{flex-shrink:0;font-weight:800;color:var(--accent);}
+  .libro-resumen .pendiente{margin:0;font-size:.8rem;line-height:1.4;color:var(--muted);font-style:italic;}
 </style>
 </head>
 <body>
@@ -333,6 +365,32 @@
   </footer>
 
 </div>
+
+<dialog id="dlg-libro">
+  <div class="sheet libro-sheet">
+    <div class="sheet-head">
+      <div>
+        <h2 id="lib-titulo">Título</h2>
+        <p id="lib-autor">Autor</p>
+      </div>
+      <button type="button" class="x-btn" id="btn-close-libro" aria-label="Cerrar">✕</button>
+    </div>
+
+    <div class="libro-detalle">
+      <div class="libro-cover" id="lib-cover"><span>📖</span></div>
+      <div class="libro-meta">
+        <div class="lib-editorial" id="lib-editorial"></div>
+        <span class="genero" id="lib-genero"></span>
+      </div>
+    </div>
+
+    <div class="libro-resumen">
+      <div class="libro-resumen-label">Por qué leerlo</div>
+      <ol id="lib-resumen" hidden></ol>
+      <p class="pendiente" id="lib-resumen-pendiente" hidden>Estamos cargando la reseña. En breve vas a tenerla disponible.</p>
+    </div>
+  </div>
+</dialog>
 
 <dialog id="dlg-encargo">
   <div class="sheet">
@@ -429,6 +487,7 @@
 
   let LIBROS = [];
   let generoActivo = '';
+  let ultimoFiltrado = [];
 
   const grid   = document.getElementById('grid');
   const qEl    = document.getElementById('q');
@@ -500,6 +559,8 @@
       ? filtrados.length + ' resultado' + (filtrados.length !== 1 ? 's' : '')
       : '';
 
+    ultimoFiltrado = filtrados;
+
     if (!filtrados.length){
       grid.hidden = true;
       empty.style.display = '';
@@ -508,13 +569,13 @@
     grid.hidden = false;
     empty.style.display = 'none';
 
-    grid.innerHTML = filtrados.map((b) => {
+    grid.innerHTML = filtrados.map((b, i) => {
       const col = GENERO_COLOR[b.genero] || COLOR_DEFAULT;
       const cover = b.isbn
         ? `<img src="https://covers.openlibrary.org/b/isbn/${encodeURIComponent(b.isbn)}-M.jpg?default=false" alt="" loading="lazy" onerror="this.remove()">`
         : '';
       return `
-      <div class="book">
+      <div class="book" data-idx="${i}">
         <div class="book-cover" style="background:${col.bg};color:${col.ink}">
           <span>📖</span>
           ${cover}
@@ -531,6 +592,62 @@
 
   qEl.addEventListener('input', render);
   sortEl.addEventListener('change', render);
+
+  // ── Detalle del libro ────────────────────────────────────────────
+  const dlgLibro = document.getElementById('dlg-libro');
+
+  function formatearResumen(texto){
+    const oraciones = (texto.match(/[^.!?]+[.!?]+/g) || [texto]).map(s => s.trim()).filter(Boolean);
+    return oraciones.map((s, i) => `<li><span class="num">${i + 1}.</span>${x(s)}</li>`).join('');
+  }
+
+  function abrirDetalle(b){
+    const col = GENERO_COLOR[b.genero] || COLOR_DEFAULT;
+    document.getElementById('lib-titulo').textContent = b.titulo;
+    document.getElementById('lib-autor').textContent = b.autor;
+    document.getElementById('lib-editorial').textContent = b.editorial || '';
+    document.getElementById('lib-editorial').hidden = !b.editorial;
+
+    const generoEl = document.getElementById('lib-genero');
+    if (b.genero){
+      generoEl.textContent = b.genero;
+      generoEl.style.background = col.bg;
+      generoEl.style.color = col.ink;
+      generoEl.hidden = false;
+    } else {
+      generoEl.hidden = true;
+    }
+
+    const coverEl = document.getElementById('lib-cover');
+    coverEl.style.background = col.bg;
+    coverEl.style.color = col.ink;
+    coverEl.innerHTML = '<span>📖</span>' + (b.isbn
+      ? `<img src="https://covers.openlibrary.org/b/isbn/${encodeURIComponent(b.isbn)}-L.jpg?default=false" alt="" onerror="this.remove()">`
+      : '');
+
+    const resumenEl = document.getElementById('lib-resumen');
+    const pendienteEl = document.getElementById('lib-resumen-pendiente');
+    if (b.resumen){
+      resumenEl.innerHTML = formatearResumen(b.resumen);
+      resumenEl.hidden = false;
+      pendienteEl.hidden = true;
+    } else {
+      resumenEl.hidden = true;
+      pendienteEl.hidden = false;
+    }
+
+    dlgLibro.showModal();
+  }
+
+  grid.addEventListener('click', (e) => {
+    const card = e.target.closest('.book');
+    if (!card) return;
+    const b = ultimoFiltrado[Number(card.dataset.idx)];
+    if (b) abrirDetalle(b);
+  });
+
+  document.getElementById('btn-close-libro').addEventListener('click', () => dlgLibro.close());
+  dlgLibro.addEventListener('click', (e) => { if (e.target === dlgLibro) dlgLibro.close(); });
 
   // ── Pedir / Vender (mismo circuito, distinto texto y "tipo") ──────
   const COPY_ENCARGO = {

@@ -116,6 +116,10 @@
         <span class="field-label">Género *</span>
         <select id="cat-genero"></select>
       </div>
+      <div class="full">
+        <span class="field-label">Por qué leerlo (opcional)</span>
+        <textarea id="cat-resumen" placeholder="Pegá acá las 2-3 oraciones de por qué leerlo..."></textarea>
+      </div>
     </div>
     <button class="btn btn-primary" style="width:auto;padding:6px 16px;font-size:12px" onclick="guardarEnCatalogo()">Guardar en Catálogo</button>
     <button class="btn btn-cancel"  style="width:auto;padding:6px 12px;font-size:12px;margin-left:6px" onclick="togglePanelCatalogo()">Cancelar</button>
@@ -374,6 +378,7 @@ function guardarEnCatalogo() {
   const isbn      = document.getElementById('cat-isbn').value.trim();
   const editorial = document.getElementById('cat-editorial').value.trim();
   const genero    = document.getElementById('cat-genero').value;
+  const resumen   = document.getElementById('cat-resumen').value.trim();
 
 
   if (!titulo) { showError('El título es obligatorio.'); return; }
@@ -392,14 +397,14 @@ function guardarEnCatalogo() {
       catalogoData.push(res.libro);
       showOk('✓ Libro agregado al Catálogo. Ya podés buscarlo y agregarlo al remito.');
       document.getElementById('panel-catalogo').style.display = 'none';
-      ['cat-titulo','cat-autor','cat-isbn','cat-editorial'].forEach(id => document.getElementById(id).value = '');
+      ['cat-titulo','cat-autor','cat-isbn','cat-editorial','cat-resumen'].forEach(id => document.getElementById(id).value = '');
       document.getElementById('cat-genero').value = '';
     })
     .withFailureHandler(function() {
       btn.disabled = false; btn.textContent = 'Guardar en Catálogo';
       showError('Error al guardar. Intentá de nuevo.');
     })
-    .agregarLibroAlCatalogo({ titulo, autor, isbn, editorial, genero });
+    .agregarLibroAlCatalogo({ titulo, autor, isbn, editorial, genero, resumen });
 }
 
 

@@ -76,14 +76,16 @@ function agregarLibroAlCatalogo(libro) {
       titulo:    String(libro.titulo    || ''),
       autor:     String(libro.autor     || ''),
       editorial: String(libro.editorial || ''),
-      genero:    String(libro.genero    || '')
+      genero:    String(libro.genero    || ''),
+      resumen:   String(libro.resumen   || '')
     });
     return { ok: true, libro: {
       isbn:      String(libro.isbn      || ''),
       titulo:    String(libro.titulo    || ''),
       autor:     String(libro.autor     || ''),
       editorial: String(libro.editorial || ''),
-      genero:    String(libro.genero    || '')
+      genero:    String(libro.genero    || ''),
+      resumen:   String(libro.resumen   || '')
     }};
   } catch (err) {
     return { ok: false, error: err.message };

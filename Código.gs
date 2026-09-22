@@ -97,7 +97,8 @@ function getStockCafe(cafeId) {
 // Para el catálogo público: solo lo que un visitante debería ver.
 // Sin modalidad, costo_firme ni ningún otro dato interno del negocio.
 function getStockPublico(cafeId) {
-  const generoPorIsbn = getGeneroCatalogoPorIsbn_();
+  const generoPorIsbn  = getGeneroCatalogoPorIsbn_();
+  const resumenPorIsbn = getResumenCatalogoPorIsbn_();
   return getRows_('Stock')
     .filter(r =>
       String(r.id_cafe) === String(cafeId) &&
@@ -109,7 +110,8 @@ function getStockPublico(cafeId) {
       titulo:    String(r.titulo    || ''),
       autor:     String(r.autor     || ''),
       editorial: String(r.editorial || ''),
-      genero:    String(r.genero || generoPorIsbn[normalizarIsbn_(r.isbn)] || '')
+      genero:    String(r.genero || generoPorIsbn[normalizarIsbn_(r.isbn)] || ''),
+      resumen:   resumenPorIsbn[normalizarIsbn_(r.isbn)] || ''
     }));
 }
 
@@ -126,6 +128,16 @@ function getGeneroCatalogoPorIsbn_() {
   getRows_('Catálogo').forEach(r => {
     const isbn = normalizarIsbn_(r.isbn);
     if (isbn && r.genero) map[isbn] = String(r.genero);
+  });
+  return map;
+}
+
+// El "resumen" (por qué leerlo) vive solo en Catálogo, no en Stock.
+function getResumenCatalogoPorIsbn_() {
+  const map = {};
+  getRows_('Catálogo').forEach(r => {
+    const isbn = normalizarIsbn_(r.isbn);
+    if (isbn && r.resumen) map[isbn] = String(r.resumen);
   });
   return map;
 }
@@ -269,7 +281,7 @@ function setupSheet() {
 
   const SHEETS = {
     'Cafés':    ['id', 'nombre', 'slug', 'activo'],
-    'Catálogo': ['isbn', 'titulo', 'autor', 'editorial', 'genero'],
+    'Catálogo': ['isbn', 'titulo', 'autor', 'editorial', 'genero', 'resumen'],
     'Stock': [
       'id_ejemplar', 'isbn', 'titulo', 'autor', 'editorial', 'genero',
       'id_cafe', 'modalidad', 'costo_firme', 'ubicacion',
@@ -507,6 +519,17 @@ function migrarGenero() {
   setDropdown_('Stock',    'genero', GENEROS);
 
   SpreadsheetApp.getUi().alert('✅ Listo', 'Se agregó la columna "genero" a Catálogo y Stock, con la lista fija como validación. No se borró ningún dato existente.', SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+
+// ── Migración segura: agrega la columna "resumen" (por qué leerlo, 2-3
+// oraciones) a Catálogo. Los libros ya cargados quedan con el campo
+// vacío hasta que se completen a mano. Correr UNA sola vez desde el
+// editor de Apps Script.
+function migrarResumen() {
+  agregarColumnasFaltantes_('Catálogo', ['resumen']);
+
+  SpreadsheetApp.getUi().alert('✅ Listo', 'Se agregó la columna "resumen" a Catálogo. No se borró ningún dato existente.', SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 
