@@ -731,7 +731,7 @@ function registrarVentaEncargo(payload) {
     // lleva comisión, esté pago o no: la columna "prepago" solo se llena
     // en ese flujo (crearEncargoDirecto), así que su sola presencia ya
     // identifica el origen — no hace falta calcular nada.
-    const esDirecto = !!(encargo && String(encargo.prepago || '') !== '');
+    const esDirecto = !!(encargo && encargo.prepago !== '' && encargo.prepago !== undefined);
 
     // Un encargo directo sin prepago no tiene comisión, así que no tiene
     // sentido que el café lo cobre y después tenga que transferir el

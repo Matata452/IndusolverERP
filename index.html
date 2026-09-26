@@ -647,7 +647,7 @@ function confirmarLlegada(encargoId,btn){
 
 
 // ── Checkout encargo ─────────────────────────────────────────────
-function esEncargoDirecto_(enc){return String(enc.prepago||'').trim()!=='';}
+function esEncargoDirecto_(enc){return enc.prepago!==''&&enc.prepago!==undefined&&enc.prepago!==null;}
 function abrirCheckoutEncargo(i){
   const enc=_encargosListos[i];
   const prepago=String(enc.prepago).toLowerCase()==='true';
