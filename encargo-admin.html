@@ -60,12 +60,14 @@
   .form-grid .label{margin-top:0;}
 
   .checkbox-row{
-    display:flex;gap:10px;align-items:flex-start;
+    display:flex;gap:10px;align-items:flex-start;cursor:pointer;
     background:#FFF3E0;border:1.5px solid #FFCC80;border-radius:9px;
-    padding:11px 12px;margin-top:16px;
+    padding:11px 12px;margin-top:16px;transition:background .15s,border-color .15s;
   }
-  .checkbox-row input{width:auto;margin-top:2px;accent-color:#8B4513;flex-shrink:0;}
+  .checkbox-row.checked{background:#FFE4B0;border-color:#C77800;}
+  .checkbox-row input{width:auto;margin-top:2px;accent-color:#8B4513;flex-shrink:0;transform:scale(1.25);cursor:pointer;}
   .checkbox-row .ct{font-size:.86rem;font-weight:700;color:#7A4A00;}
+  .checkbox-row.checked .ct::after{content:' ✓ activado';font-weight:700;color:#C77800;}
   .checkbox-row .cd{font-size:.76rem;color:#8B6A2F;margin-top:2px;line-height:1.35;}
 </style>
 </head>
@@ -318,6 +320,9 @@ function actualizarBotones(){
 }
 document.getElementById('d-cafe').addEventListener('change', actualizarBotones);
 document.getElementById('d-cliente').addEventListener('input', actualizarBotones);
+document.getElementById('d-prepago').addEventListener('change', function(){
+  this.closest('.checkbox-row').classList.toggle('checked', this.checked);
+});
 
 // ── Confirmar: encargo que ya venía pendiente ──────────────────────
 function confirmarGestion(){

@@ -665,7 +665,7 @@ function crearEncargoDirecto(payload) {
       (payload.notas ? '📝 Notas: ' + payload.notas + '\n' : '') +
       (prepago
         ? '💰 Ya pagado — sin comisión para el café'
-        : '✅ Ya está en stock, cargado directo por Bookbuster')
+        : '✅ Ya quedó cargado en el stock del café, listo para entregar (no requiere gestión aparte)')
     );
 
     return { ok: true, id };
