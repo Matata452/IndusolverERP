@@ -239,8 +239,8 @@
   ];
 
   const ENCARGOS_PENDIENTES = [
-    { cafe:'Café de la Esquina', descripcion:'Busca "el libro nuevo de Mariana Enríquez"', cliente:'Marcos Suárez', fecha:'22/09' },
-    { cafe:'Cigaló', descripcion:'Rayuela, edición de bolsillo si hay', cliente:'Fede Gómez', fecha:'24/09' }
+    { cafe:'Café de la Esquina', descripcion:'Busca "el libro nuevo de Mariana Enríquez"', cliente:'Marcos Suárez', telefono:'11 4455-6677', fecha:'22/09' },
+    { cafe:'Cigaló', descripcion:'Rayuela, edición de bolsillo si hay', cliente:'Fede Gómez', telefono:'', fecha:'24/09' }
   ];
 
   let pickedGestion = null, pickedDirecto = null;
@@ -284,7 +284,7 @@
   function irAGestionar(i){
     const e = ENCARGOS_PENDIENTES[i];
     document.getElementById('s2-title').textContent = 'Datos del libro para ' + e.cafe;
-    document.getElementById('s2-resumen').innerHTML = '<strong>'+x(e.cafe)+'</strong> · '+x(e.descripcion)+'<br>'+x(e.cliente);
+    document.getElementById('s2-resumen').innerHTML = '<strong>'+x(e.cafe)+'</strong> · '+x(e.descripcion)+'<br>'+x(e.cliente)+(e.telefono?' · '+x(e.telefono):'');
     document.getElementById('p-list').style.display = 'none';
     document.getElementById('p-gestionar').style.display = '';
   }
