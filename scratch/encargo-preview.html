@@ -154,8 +154,11 @@
       <button class="btn-link" style="margin-top:8px" onclick="toggleAgregar('directo')">+ ¿No está? Agregarlo al Catálogo</button>
       <div id="panel-catalogo-directo"></div>
 
-      <span class="label">Club de lectura / cliente (opcional)</span>
-      <input type="text" id="d-cliente" placeholder="Ej: Club de lectura Belgrano">
+      <span class="label">Nombre del cliente *</span>
+      <input type="text" id="d-cliente" placeholder="Nombre y apellido (o del club de lectura)">
+
+      <span class="label">WhatsApp (opcional)</span>
+      <input type="text" id="d-wsp" placeholder="11 1234-5678">
 
       <span class="label">Notas (opcional)</span>
       <input type="text" id="d-notas" placeholder="Cualquier detalle extra...">
@@ -272,6 +275,7 @@
     document.getElementById('q-directo').value = '';
     document.getElementById('d-cafe').value = '';
     document.getElementById('d-cliente').value = '';
+    document.getElementById('d-wsp').value = '';
     document.getElementById('d-notas').value = '';
     document.getElementById('d-prepago').checked = false;
     actualizarBotones();
@@ -379,9 +383,11 @@
   function actualizarBotones(){
     document.getElementById('btn-gestionar').disabled = !pickedGestion;
     const cafe = document.getElementById('d-cafe').value;
-    document.getElementById('btn-directo').disabled = !(pickedDirecto && cafe);
+    const nombre = document.getElementById('d-cliente').value.trim();
+    document.getElementById('btn-directo').disabled = !(pickedDirecto && cafe && nombre);
   }
   document.getElementById('d-cafe').addEventListener('change', actualizarBotones);
+  document.getElementById('d-cliente').addEventListener('input', actualizarBotones);
 
   function confirmarGestion(){
     document.getElementById('p-gestionar').style.display = 'none';
@@ -391,11 +397,16 @@
 
   function confirmarDirecto(){
     const cafe = document.getElementById('d-cafe').value;
+    const cliente = document.getElementById('d-cliente').value.trim();
+    const wsp = document.getElementById('d-wsp').value.trim();
     const prepago = document.getElementById('d-prepago').checked;
     document.getElementById('p-directo').style.display = 'none';
-    document.getElementById('ok-msg').textContent =
-      '¡Listo! Encargo directo de "'+pickedDirecto.titulo+'" creado para '+cafe+
-      (prepago ? ' (marcado como ya pago — el café no va a ver precio ni comisión).' : '.');
+    document.getElementById('ok-msg').innerHTML =
+      '¡Listo! Encargo directo de "'+x(pickedDirecto.titulo)+'" creado para '+x(cafe)+
+      (prepago ? ' (marcado como ya pago — el café no va a ver precio ni comisión).' : '.') +
+      '<br><br><span style="font-size:.78rem;color:#7C6F64;font-weight:500">Llega a Telegram con el mismo formato de siempre:<br>' +
+      '📋 Nuevo encargo<br>☕ Café: '+x(cafe)+'<br>📚 Libro(s): '+x(pickedDirecto.titulo)+'<br>👤 Nombre: '+x(cliente)+
+      (wsp ? '<br>📱 WhatsApp: '+x(wsp) : '') + '</span>';
     document.getElementById('p-ok').style.display = '';
   }
 
