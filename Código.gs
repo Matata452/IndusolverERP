@@ -733,6 +733,11 @@ function registrarVentaEncargo(payload) {
     // identifica el origen — no hace falta calcular nada.
     const esDirecto = !!(encargo && String(encargo.prepago || '') !== '');
 
+    // Un encargo directo sin prepago no tiene comisión, así que no tiene
+    // sentido que el café lo cobre y después tenga que transferir el
+    // 100% de vuelta: el cliente paga directo a Bookbuster.
+    if (esDirecto && !prepago) payload.tipoPago = 'transfer_bookbuster';
+
     // TODO: cuando se definan comisiones distintas por canal, ramificar
     // acá según `canal` (hoy 30% para cafe y web por igual).
     const comisionPct   = (prepago || esDirecto) ? 0 : 30;

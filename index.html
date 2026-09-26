@@ -293,6 +293,7 @@
                 </div>
               </label>
             </div>
+            <div id="enc-directo-pago-nota" class="alert" style="display:none">Este encargo es directo de Bookbuster y no tiene comisión para el café — el cliente paga por transferencia, no hay opción de cobrarlo vos.</div>
             <div id="enc-cafe-nota" class="alert" style="display:none"></div>
           </div>
         </div>
@@ -651,6 +652,7 @@ function abrirCheckoutEncargo(i){
   const enc=_encargosListos[i];
   const prepago=String(enc.prepago).toLowerCase()==='true';
   const esDirecto=esEncargoDirecto_(enc);
+  const sinOpcionCafe=esDirecto&&!prepago;
   selectedEncargo=enc;descuentoEnc=0;tipoPagoEnc='transfer_bookbuster';
   document.getElementById('enc-book-header').innerHTML=`
     <div style="font-weight:700;font-size:1.05rem;margin-bottom:.2rem">${x(enc.titulo)}</div>
@@ -663,6 +665,8 @@ function abrirCheckoutEncargo(i){
   document.getElementById('enc-price-box').style.display='none';
   document.getElementById('enc-btn-checkout').disabled=!prepago;
   document.getElementById('enc-btn-checkout').textContent=prepago?'✓ Confirmar entrega':'Confirmar entrega';
+  document.getElementById('enc-opt-cafe').style.display=sinOpcionCafe?'none':'';
+  document.getElementById('enc-directo-pago-nota').style.display=sinOpcionCafe?'':'none';
   document.getElementById('enc-cafe-nota').style.display='none';
   setDescuentoEnc(0,true);setTipoPagoEnc('transfer_bookbuster',true);
   document.getElementById('enc-activos').style.display='none';
