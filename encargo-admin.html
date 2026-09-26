@@ -6,43 +6,131 @@
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;color:#2C1810;background:#FAF7F2;padding:16px;}
   h3{font-size:1rem;font-weight:700;margin-bottom:12px;color:#2C1810;}
+  .sub{font-size:.8rem;color:#7C6F64;margin:-8px 0 12px;}
   .label{display:block;font-size:.72rem;font-weight:700;color:#7C6F64;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;margin-top:12px;}
-  input,select{width:100%;padding:8px 10px;border:1.5px solid #E8E0D5;border-radius:8px;font-size:.93rem;background:#fff;color:#2C1810;-webkit-appearance:none;appearance:none;}
-  input:focus,select:focus{outline:none;border-color:#8B4513;}
+  input,select,textarea{width:100%;padding:8px 10px;border:1.5px solid #E8E0D5;border-radius:8px;font-size:.93rem;background:#fff;color:#2C1810;-webkit-appearance:none;appearance:none;font-family:inherit;}
+  textarea{resize:vertical;min-height:54px;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:#8B4513;}
   .enc-card{background:#fff;border:1.5px solid #E8E0D5;border-radius:10px;padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:border-color .15s;}
   .enc-card:hover{border-color:#8B4513;}
   .enc-card.on{border-color:#8B4513;background:#FFF8F5;}
   .enc-title{font-weight:600;font-size:.9rem;}
   .enc-sub{font-size:.78rem;color:#7C6F64;margin-top:2px;}
-  .btn{width:100%;padding:10px;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:14px;}
+  .btn{width:100%;padding:10px;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:14px;font-family:inherit;}
   .btn-primary{background:#8B4513;color:#fff;}
   .btn:disabled{opacity:.45;cursor:default;}
+  .btn-link{
+    width:100%;background:none;border:1.5px dashed #C7A97B;color:#8B4513;
+    border-radius:8px;padding:9px;font-size:.85rem;font-weight:700;cursor:pointer;
+    margin-top:8px;font-family:inherit;
+  }
+  .btn-directo{margin-bottom:14px;}
   .empty{text-align:center;padding:24px;color:#7C6F64;font-size:.88rem;}
   .success{text-align:center;padding:24px;}
   .success .ico{font-size:2.5rem;margin-bottom:8px;}
   .success p{color:#2D6A4F;font-weight:600;}
   .error{background:#FFF3E0;border:1px solid #FFB74D;border-radius:8px;padding:8px 10px;font-size:.83rem;margin-top:10px;display:none;}
+
+  .search-wrap{position:relative;margin-top:6px;}
+  .search-wrap input{padding-left:28px;}
+  .search-wrap::before{content:'🔍';position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:12px;pointer-events:none;}
+  .results-list{max-height:120px;overflow-y:auto;border:1px solid #E8E0D5;border-radius:8px;background:#fff;margin-top:6px;}
+  .result-item{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-bottom:1px solid #F0E8E0;}
+  .result-item:last-child{border-bottom:none;}
+  .result-item:hover{background:#FFF8F5;}
+  .result-info{flex:1;min-width:0;}
+  .result-title{font-weight:600;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .result-sub{font-size:11px;color:#7C6F64;}
+  .btn-add-book{background:#8B4513;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11.5px;cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:inherit;}
+  .empty-mini{text-align:center;padding:10px;color:#7C6F64;font-size:.8rem;}
+
+  .picked{
+    background:#EAF4EE;border:1px solid #B9DCC5;border-radius:8px;
+    padding:9px 11px;margin-top:8px;font-size:.85rem;color:#2D6A4F;
+    display:flex;justify-content:space-between;align-items:center;gap:8px;
+  }
+  .picked b{display:block;font-size:.88rem;}
+  .picked button{background:none;border:none;color:#2D6A4F;font-size:.78rem;text-decoration:underline;cursor:pointer;flex-shrink:0;font-family:inherit;}
+
+  .panel-nuevo{background:#FFF8F5;border:1.5px solid #E8C99A;border-radius:8px;padding:10px;margin-top:8px;display:none;}
+  .panel-nuevo.show{display:block;}
+  .panel-nuevo h4{color:#8B4513;font-size:.85rem;margin-bottom:8px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .form-grid .full{grid-column:1/-1;}
+  .form-grid .label{margin-top:0;}
+
+  .checkbox-row{
+    display:flex;gap:10px;align-items:flex-start;
+    background:#FFF3E0;border:1.5px solid #FFCC80;border-radius:9px;
+    padding:11px 12px;margin-top:16px;
+  }
+  .checkbox-row input{width:auto;margin-top:2px;accent-color:#8B4513;flex-shrink:0;}
+  .checkbox-row .ct{font-size:.86rem;font-weight:700;color:#7A4A00;}
+  .checkbox-row .cd{font-size:.76rem;color:#8B6A2F;margin-top:2px;line-height:1.35;}
 </style>
 </head>
 <body>
+
 <div id="step1">
   <h3>Seleccioná el encargo a gestionar</h3>
+  <button class="btn-link btn-directo" onclick="irADirecto()">➕ Nuevo encargo directo</button>
+  <div class="sub" style="margin-top:0">Pendientes (vienen de un café o del catálogo web)</div>
   <div id="enc-list"><div class="empty">Cargando...</div></div>
 </div>
 
 <div id="step2" style="display:none">
   <h3 id="s2-title">Completá los datos del libro</h3>
   <div id="enc-resumen" style="background:#EAF4EE;border-radius:8px;padding:10px 12px;margin-bottom:4px;font-size:.85rem;color:#2D6A4F;"></div>
-  <span class="label">Título</span>
-  <input type="text" id="f-titulo" placeholder="Título del libro" autocomplete="off">
-  <span class="label">Autor</span>
-  <input type="text" id="f-autor" placeholder="Nombre del autor" autocomplete="off">
-  <span class="label">Editorial (opcional)</span>
-  <input type="text" id="f-editorial" placeholder="Editorial" autocomplete="off">
-  <span class="label">ISBN (opcional)</span>
-  <input type="text" id="f-isbn" placeholder="9789..." autocomplete="off" inputmode="numeric">
+
+  <span class="label">Buscar libro en el Catálogo</span>
+  <div class="search-wrap">
+    <input type="text" id="g-search" placeholder="Título, autor o ISBN..." oninput="filtrarCatalogo('gestion', this.value)" autocomplete="off">
+  </div>
+  <div class="results-list" id="g-results"><div class="empty-mini">Escribí para buscar</div></div>
+  <div id="g-picked"></div>
+  <button class="btn-link" onclick="toggleAgregar('gestion')">+ ¿No está? Agregarlo al Catálogo</button>
+  <div class="panel-nuevo" id="g-panel-nuevo"></div>
+
   <div class="error" id="err-msg"></div>
-  <button class="btn btn-primary" id="btn-confirm" onclick="confirmar()">✓ Confirmar y enviar al café</button>
+  <button class="btn btn-primary" id="btn-confirm" disabled onclick="confirmarGestion()">✓ Confirmar y enviar al café</button>
+  <button class="btn" style="background:#fff;border:1.5px solid #E8E0D5;color:#2C1810;margin-top:6px" onclick="volver()">← Volver</button>
+</div>
+
+<div id="step-directo" style="display:none">
+  <h3>Nuevo encargo directo</h3>
+  <div class="sub">Para pedidos que te llegan a vos directamente, sin pasar por el catálogo de un café.</div>
+
+  <span class="label" style="margin-top:0">Café donde se entrega *</span>
+  <select id="d-cafe">
+    <option value="">— Seleccioná un café —</option>
+  </select>
+
+  <span class="label">Buscar libro en el Catálogo</span>
+  <div class="search-wrap">
+    <input type="text" id="d-search" placeholder="Título, autor o ISBN..." oninput="filtrarCatalogo('directo', this.value)" autocomplete="off">
+  </div>
+  <div class="results-list" id="d-results"><div class="empty-mini">Escribí para buscar</div></div>
+  <div id="d-picked"></div>
+  <button class="btn-link" onclick="toggleAgregar('directo')">+ ¿No está? Agregarlo al Catálogo</button>
+  <div class="panel-nuevo" id="d-panel-nuevo"></div>
+
+  <span class="label">Nombre del cliente *</span>
+  <input type="text" id="d-cliente" placeholder="Nombre y apellido">
+  <span class="label">WhatsApp (opcional)</span>
+  <input type="text" id="d-wsp" placeholder="11 1234-5678">
+  <span class="label">Notas (opcional)</span>
+  <input type="text" id="d-notas" placeholder="Cualquier detalle extra...">
+
+  <label class="checkbox-row">
+    <input type="checkbox" id="d-prepago">
+    <div>
+      <div class="ct">Ya está pago</div>
+      <div class="cd">Para pedidos que ya cobraste vos directamente (ej: clubes de lectura). El café no va a ver precio ni comisión — solo va a tener que confirmar la entrega.</div>
+    </div>
+  </label>
+
+  <div class="error" id="err-msg-directo"></div>
+  <button class="btn btn-primary" id="btn-directo" disabled onclick="confirmarDirecto()">✓ Crear encargo</button>
   <button class="btn" style="background:#fff;border:1.5px solid #E8E0D5;color:#2C1810;margin-top:6px" onclick="volver()">← Volver</button>
 </div>
 
@@ -55,17 +143,41 @@
 </div>
 
 <script>
-let encargos=[], selected=null;
+const GENEROS = [
+  'Ficción Moderna', 'Novela Policial', 'Novela Romántica', 'Fantasía juvenil',
+  'Cuentos y Relatos', 'Clásicos', 'Ensayos e Historia', 'Biografías y Crónicas',
+  'Autoayuda', 'Negocios'
+];
+
+let encargos = [], selected = null;
+let catalogoData = [];
+let pickedGestion = null, pickedDirecto = null;
+let _resultsGestion = [], _resultsDirecto = [];
 
 google.script.run
-  .withSuccessHandler(function(d){ encargos=d||[]; renderList(); })
-  .withFailureHandler(function(){ document.getElementById('enc-list').innerHTML='<div class="empty">Error al cargar encargos.</div>'; })
+  .withSuccessHandler(function(d){ encargos = d || []; renderList(); })
+  .withFailureHandler(function(){ document.getElementById('enc-list').innerHTML = '<div class="empty">Error al cargar encargos.</div>'; })
   .getPendingEncargos();
 
+google.script.run
+  .withSuccessHandler(function(d){ catalogoData = d || []; })
+  .getCatalogo();
+
+google.script.run
+  .withSuccessHandler(function(cafes) {
+    const sel = document.getElementById('d-cafe');
+    cafes.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id; opt.textContent = c.nombre;
+      sel.appendChild(opt);
+    });
+  })
+  .getCafesLista();
+
 function renderList(){
-  const el=document.getElementById('enc-list');
-  if(!encargos.length){el.innerHTML='<div class="empty">No hay encargos pendientes.</div>';return;}
-  el.innerHTML=encargos.map((e,i)=>`
+  const el = document.getElementById('enc-list');
+  if (!encargos.length){ el.innerHTML = '<div class="empty">No hay encargos pendientes.</div>'; return; }
+  el.innerHTML = encargos.map((e,i) => `
     <div class="enc-card" id="ecard-${i}" onclick="selectEnc(${i})">
       <div class="enc-title">${x(e.descripcion)}</div>
       <div class="enc-sub">${x(e.cafe)} · ${x(e.cliente_nombre)}${e.cliente_whatsapp?' · '+x(e.cliente_whatsapp):''}</div>
@@ -74,68 +186,247 @@ function renderList(){
 }
 
 function selectEnc(i){
-  document.querySelectorAll('.enc-card').forEach(c=>c.classList.remove('on'));
+  document.querySelectorAll('.enc-card').forEach(c => c.classList.remove('on'));
   document.getElementById('ecard-'+i).classList.add('on');
-  selected=encargos[i];
-  const resumeEl=document.getElementById('enc-resumen');
-  resumeEl.innerHTML='<strong>'+x(selected.cafe)+'</strong> · '+x(selected.descripcion)+'<br>'+x(selected.cliente_nombre)+(selected.cliente_whatsapp?' · '+x(selected.cliente_whatsapp):'');
-  document.getElementById('s2-title').textContent='Datos del libro para '+selected.cafe;
-  document.getElementById('step1').style.display='none';
-  document.getElementById('step2').style.display='';
+  selected = encargos[i];
+  const resumeEl = document.getElementById('enc-resumen');
+  resumeEl.innerHTML = '<strong>'+x(selected.cafe)+'</strong> · '+x(selected.descripcion)+'<br>'+x(selected.cliente_nombre)+(selected.cliente_whatsapp?' · '+x(selected.cliente_whatsapp):'');
+  document.getElementById('s2-title').textContent = 'Datos del libro para ' + selected.cafe;
+  document.getElementById('step1').style.display = 'none';
+  document.getElementById('step2').style.display = '';
+}
+
+function irADirecto(){
+  document.getElementById('step1').style.display = 'none';
+  document.getElementById('step-directo').style.display = '';
 }
 
 function volver(){
-  document.getElementById('step1').style.display='';
-  document.getElementById('step2').style.display='none';
-  document.getElementById('err-msg').style.display='none';
+  document.getElementById('step1').style.display = '';
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('step-directo').style.display = 'none';
+  document.getElementById('err-msg').style.display = 'none';
+  document.getElementById('err-msg-directo').style.display = 'none';
 }
 
-function confirmar(){
-  const titulo=document.getElementById('f-titulo').value.trim();
-  if(!titulo){showErr('Ingresá el título del libro.');return;}
-  const btn=document.getElementById('btn-confirm');
-  btn.disabled=true;btn.textContent='Guardando...';
+// ── Buscar / elegir libro del Catálogo (compartido entre los dos flujos) ──
+function filtrarCatalogo(ctx, q){
+  const el = document.getElementById(ctx === 'gestion' ? 'g-results' : 'd-results');
+  if (!q.trim()){ el.innerHTML = '<div class="empty-mini">Escribí para buscar</div>'; return; }
+  const s = q.toLowerCase();
+  const res = catalogoData.filter(b =>
+    (b.titulo || '').toLowerCase().includes(s) ||
+    (b.autor  || '').toLowerCase().includes(s) ||
+    String(b.isbn || '').includes(s)
+  );
+  if (!res.length){ el.innerHTML = '<div class="empty-mini">No encontrado. Usá "Agregarlo al Catálogo" abajo.</div>'; return; }
+  const results = res.slice(0, 20);
+  if (ctx === 'gestion') _resultsGestion = results; else _resultsDirecto = results;
+  el.innerHTML = results.map((b,i) => `
+    <div class="result-item">
+      <div class="result-info">
+        <div class="result-title">${x(b.titulo)}</div>
+        <div class="result-sub">${x(b.autor)}${b.genero ? ' · '+x(b.genero) : ''}</div>
+      </div>
+      <button class="btn-add-book" onclick="elegirLibro('${ctx}', ${i})">+ Elegir</button>
+    </div>`).join('');
+}
+
+function elegirLibro(ctx, i){
+  const b = (ctx === 'gestion' ? _resultsGestion : _resultsDirecto)[i];
+  if (ctx === 'gestion') pickedGestion = b; else pickedDirecto = b;
+  renderPicked(ctx, b);
+  document.getElementById(ctx === 'gestion' ? 'g-search' : 'd-search').value = '';
+  document.getElementById(ctx === 'gestion' ? 'g-results' : 'd-results').innerHTML = '<div class="empty-mini">Escribí para buscar</div>';
+  actualizarBotones();
+}
+
+function renderPicked(ctx, b){
+  document.getElementById(ctx === 'gestion' ? 'g-picked' : 'd-picked').innerHTML = `
+    <div class="picked">
+      <div><b>${x(b.titulo)}</b>${x(b.autor)}${b.genero ? ' · '+x(b.genero) : ''}</div>
+      <button onclick="quitarPicked('${ctx}')">quitar</button>
+    </div>`;
+}
+
+function quitarPicked(ctx){
+  if (ctx === 'gestion') pickedGestion = null; else pickedDirecto = null;
+  document.getElementById(ctx === 'gestion' ? 'g-picked' : 'd-picked').innerHTML = '';
+  actualizarBotones();
+}
+
+function toggleAgregar(ctx){
+  const p = document.getElementById(ctx === 'gestion' ? 'g-panel-nuevo' : 'd-panel-nuevo');
+  if (!p.innerHTML) p.innerHTML = formAgregar(ctx);
+  p.classList.toggle('show');
+}
+
+function formAgregar(ctx){
+  return `
+    <h4>Agregar libro al Catálogo</h4>
+    <div class="form-grid">
+      <div class="full"><span class="label">Título *</span><input type="text" id="na-titulo-${ctx}"></div>
+      <div><span class="label">Autor *</span><input type="text" id="na-autor-${ctx}"></div>
+      <div><span class="label">ISBN</span><input type="text" id="na-isbn-${ctx}"></div>
+      <div><span class="label">Editorial</span><input type="text" id="na-editorial-${ctx}"></div>
+      <div><span class="label">Género *</span>
+        <select id="na-genero-${ctx}"><option value="">— Elegí —</option>${GENEROS.map(g=>`<option>${x(g)}</option>`).join('')}</select>
+      </div>
+      <div class="full"><span class="label">Por qué leerlo (opcional)</span><textarea id="na-resumen-${ctx}" placeholder="2-3 oraciones..."></textarea></div>
+    </div>
+    <button class="btn btn-primary" style="margin-top:10px" id="na-btn-${ctx}" onclick="guardarNuevo('${ctx}')">Guardar en Catálogo</button>
+  `;
+}
+
+function guardarNuevo(ctx){
+  const titulo = document.getElementById('na-titulo-'+ctx).value.trim();
+  const autor  = document.getElementById('na-autor-'+ctx).value.trim();
+  const isbn   = document.getElementById('na-isbn-'+ctx).value.trim();
+  const editorial = document.getElementById('na-editorial-'+ctx).value.trim();
+  const genero = document.getElementById('na-genero-'+ctx).value;
+  const resumen = document.getElementById('na-resumen-'+ctx).value.trim();
+
+  if (!titulo || !autor || !genero){
+    showErr(ctx === 'gestion' ? 'err-msg' : 'err-msg-directo', 'Completá título, autor y género.');
+    return;
+  }
+  const btn = document.getElementById('na-btn-'+ctx);
+  btn.disabled = true; btn.textContent = 'Guardando...';
+
   google.script.run
     .withSuccessHandler(function(res){
-      if(res.ok){
-        document.getElementById('success-msg').textContent=
-          '¡Listo! "'+titulo+'" ya está en camino a '+selected.cafe+'.';
-        document.getElementById('step2').style.display='none';
-        document.getElementById('step3').style.display='';
+      btn.disabled = false; btn.textContent = 'Guardar en Catálogo';
+      if (!res.ok){ showErr(ctx === 'gestion' ? 'err-msg' : 'err-msg-directo', res.error); return; }
+      catalogoData.push(res.libro);
+      if (ctx === 'gestion') pickedGestion = res.libro; else pickedDirecto = res.libro;
+      renderPicked(ctx, res.libro);
+      document.getElementById(ctx === 'gestion' ? 'g-panel-nuevo' : 'd-panel-nuevo').classList.remove('show');
+      actualizarBotones();
+    })
+    .withFailureHandler(function(){
+      btn.disabled = false; btn.textContent = 'Guardar en Catálogo';
+      showErr(ctx === 'gestion' ? 'err-msg' : 'err-msg-directo', 'Error al guardar. Intentá de nuevo.');
+    })
+    .agregarLibroAlCatalogo({ titulo, autor, isbn, editorial, genero, resumen });
+}
+
+function actualizarBotones(){
+  document.getElementById('btn-confirm').disabled = !pickedGestion;
+  const cafe = document.getElementById('d-cafe').value;
+  const nombre = document.getElementById('d-cliente').value.trim();
+  document.getElementById('btn-directo').disabled = !(pickedDirecto && cafe && nombre);
+}
+document.getElementById('d-cafe').addEventListener('change', actualizarBotones);
+document.getElementById('d-cliente').addEventListener('input', actualizarBotones);
+
+// ── Confirmar: encargo que ya venía pendiente ──────────────────────
+function confirmarGestion(){
+  if (!pickedGestion){ showErr('err-msg', 'Elegí un libro del Catálogo.'); return; }
+  const btn = document.getElementById('btn-confirm');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  google.script.run
+    .withSuccessHandler(function(res){
+      if (res.ok){
+        document.getElementById('success-msg').textContent =
+          '¡Listo! "'+pickedGestion.titulo+'" ya está en camino a '+selected.cafe+'.';
+        document.getElementById('step2').style.display = 'none';
+        document.getElementById('step3').style.display = '';
       } else {
-        showErr('Error: '+res.error);
-        btn.disabled=false;btn.textContent='✓ Confirmar y enviar al café';
+        showErr('err-msg', 'Error: '+res.error);
+        btn.disabled = false; btn.textContent = '✓ Confirmar y enviar al café';
       }
     })
     .withFailureHandler(function(){
-      showErr('Error al guardar. Intentá de nuevo.');
-      btn.disabled=false;btn.textContent='✓ Confirmar y enviar al café';
+      showErr('err-msg', 'Error al guardar. Intentá de nuevo.');
+      btn.disabled = false; btn.textContent = '✓ Confirmar y enviar al café';
     })
     .gestionarEncargo({
-      encargoId:  selected.id,
-      cafeId:     selected.id_cafe,
-      titulo:     titulo,
-      autor:      document.getElementById('f-autor').value.trim(),
-      editorial:  document.getElementById('f-editorial').value.trim(),
-      isbn:       document.getElementById('f-isbn').value.trim()
+      encargoId: selected.id,
+      cafeId:    selected.id_cafe,
+      titulo:    pickedGestion.titulo,
+      autor:     pickedGestion.autor,
+      editorial: pickedGestion.editorial,
+      isbn:      pickedGestion.isbn,
+      genero:    pickedGestion.genero
+    });
+}
+
+// ── Confirmar: encargo directo (nuevo) ──────────────────────────────
+function confirmarDirecto(){
+  const cafeSel = document.getElementById('d-cafe');
+  const cafeId = cafeSel.value;
+  const cafeName = cafeSel.options[cafeSel.selectedIndex].textContent;
+  const cliente = document.getElementById('d-cliente').value.trim();
+  const wsp = document.getElementById('d-wsp').value.trim();
+  const notas = document.getElementById('d-notas').value.trim();
+  const prepago = document.getElementById('d-prepago').checked;
+
+  if (!pickedDirecto){ showErr('err-msg-directo', 'Elegí un libro del Catálogo.'); return; }
+  if (!cafeId){ showErr('err-msg-directo', 'Seleccioná un café.'); return; }
+  if (!cliente){ showErr('err-msg-directo', 'Ingresá el nombre del cliente.'); return; }
+
+  const btn = document.getElementById('btn-directo');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+
+  google.script.run
+    .withSuccessHandler(function(res){
+      if (res.ok){
+        document.getElementById('success-msg').textContent =
+          '¡Listo! Encargo directo de "'+pickedDirecto.titulo+'" creado para '+cafeName +
+          (prepago ? ' (ya está pago — el café no va a ver precio ni comisión).' : '.');
+        document.getElementById('step-directo').style.display = 'none';
+        document.getElementById('step3').style.display = '';
+      } else {
+        showErr('err-msg-directo', 'Error: '+res.error);
+        btn.disabled = false; btn.textContent = '✓ Crear encargo';
+      }
+    })
+    .withFailureHandler(function(){
+      showErr('err-msg-directo', 'Error al guardar. Intentá de nuevo.');
+      btn.disabled = false; btn.textContent = '✓ Crear encargo';
+    })
+    .crearEncargoDirecto({
+      cafeId, cafeName,
+      titulo:    pickedDirecto.titulo,
+      autor:     pickedDirecto.autor,
+      editorial: pickedDirecto.editorial,
+      isbn:      pickedDirecto.isbn,
+      genero:    pickedDirecto.genero,
+      clienteNombre:   cliente,
+      clienteWhatsapp: wsp,
+      notas,
+      prepago
     });
 }
 
 function resetForm(){
-  selected=null;
-  ['f-titulo','f-autor','f-editorial','f-isbn'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('err-msg').style.display='none';
-  document.getElementById('step2').style.display='none';
-  document.getElementById('step3').style.display='none';
-  document.getElementById('step1').style.display='';
+  selected = null; pickedGestion = null; pickedDirecto = null;
+  document.getElementById('g-picked').innerHTML = '';
+  document.getElementById('d-picked').innerHTML = '';
+  document.getElementById('g-panel-nuevo').classList.remove('show');
+  document.getElementById('d-panel-nuevo').classList.remove('show');
+  document.getElementById('g-search').value = '';
+  document.getElementById('d-search').value = '';
+  document.getElementById('d-cafe').value = '';
+  document.getElementById('d-cliente').value = '';
+  document.getElementById('d-wsp').value = '';
+  document.getElementById('d-notas').value = '';
+  document.getElementById('d-prepago').checked = false;
+  document.getElementById('err-msg').style.display = 'none';
+  document.getElementById('err-msg-directo').style.display = 'none';
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('step-directo').style.display = 'none';
+  document.getElementById('step3').style.display = 'none';
+  document.getElementById('step1').style.display = '';
+  actualizarBotones();
   google.script.run
-    .withSuccessHandler(function(d){encargos=d||[];renderList();})
+    .withSuccessHandler(function(d){ encargos = d || []; renderList(); })
     .getPendingEncargos();
 }
 
-function showErr(msg){const el=document.getElementById('err-msg');el.textContent=msg;el.style.display='';}
-function fDate(d){if(!d)return '';const dt=d instanceof Date?d:new Date(d);if(isNaN(dt))return '';return dt.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'});}
-function x(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function showErr(id, msg){ const el = document.getElementById(id); el.textContent = msg; el.style.display = ''; }
+function fDate(d){ if(!d) return ''; const dt = d instanceof Date ? d : new Date(d); if (isNaN(dt)) return ''; return dt.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'}); }
+function x(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 </script>
 </body>
 </html>

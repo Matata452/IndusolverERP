@@ -50,7 +50,7 @@ function abrirReporteMensual() {
 
 function abrirGestionarEncargo() {
   const html = HtmlService.createHtmlOutputFromFile('encargo-admin')
-    .setWidth(500).setHeight(580);
+    .setWidth(520).setHeight(680);
   SpreadsheetApp.getUi().showModalDialog(html, '📩 Gestionar encargo');
 }
 
@@ -297,7 +297,7 @@ function setupSheet() {
     ],
     'Encargos': [
       'id', 'fecha', 'id_cafe', 'cafe', 'descripcion',
-      'cliente_nombre', 'cliente_whatsapp', 'notas', 'estado', 'canal', 'tipo'
+      'cliente_nombre', 'cliente_whatsapp', 'notas', 'estado', 'canal', 'tipo', 'prepago'
     ]
   };
 
@@ -533,6 +533,17 @@ function migrarResumen() {
 }
 
 
+// ── Migración segura: agrega la columna "prepago" a Encargos, para los
+// encargos directos (cargados por Bookbuster sin pasar por un café) que
+// ya fueron pagados de antemano y no llevan comisión. Correr UNA sola
+// vez desde el editor de Apps Script.
+function migrarEncargoDirecto() {
+  agregarColumnasFaltantes_('Encargos', ['prepago']);
+
+  SpreadsheetApp.getUi().alert('✅ Listo', 'Se agregó la columna "prepago" a Encargos. No se borró ningún dato existente.', SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+
 // ── Migración segura: agrega la columna "tipo" (compra / venta / contacto)
 // a Encargos, para distinguir pedidos de compra de ofertas de venta y
 // mensajes de contacto que llegan desde el catálogo web. Los encargos
@@ -582,6 +593,7 @@ function gestionarEncargo(payload) {
       titulo:        payload.titulo,
       autor:         payload.autor || '',
       editorial:     payload.editorial || '',
+      genero:        payload.genero || '',
       id_cafe:       payload.cafeId,
       modalidad:     'firme',
       costo_firme:   '',
@@ -593,6 +605,71 @@ function gestionarEncargo(payload) {
     setEncargoEstado_(payload.encargoId, 'gestionado');
     return { ok: true };
   } catch(err) {
+    return { ok: false, error: err.message };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
+// Encargo cargado directo por Bookbuster (sin pasar por el catálogo de un
+// café), para pedidos que llegan a vos por afuera. A diferencia del flujo
+// normal (registrarEncargo → gestionarEncargo), acá ya sabés qué libro es,
+// así que se crea el Encargo y el ejemplar en Stock en un solo paso, con
+// estado "gestionado" directamente.
+function crearEncargoDirecto(payload) {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) return { ok: false, error: 'Sistema ocupado.' };
+  try {
+    const id         = newId_('E');
+    const idEjemplar = newId_('EJ');
+    const prepago    = !!payload.prepago;
+
+    appendRow_('Encargos', {
+      id,
+      fecha:            new Date(),
+      id_cafe:          payload.cafeId,
+      cafe:             payload.cafeName,
+      descripcion:      payload.titulo,
+      cliente_nombre:   payload.clienteNombre,
+      cliente_whatsapp: payload.clienteWhatsapp || '',
+      notas:            payload.notas || '',
+      estado:           'gestionado',
+      canal:            'cafe',
+      tipo:             'compra',
+      prepago:          prepago ? 'TRUE' : 'FALSE'
+    });
+
+    appendRow_('Stock', {
+      id_ejemplar:   idEjemplar,
+      isbn:          payload.isbn      || '',
+      titulo:        payload.titulo,
+      autor:         payload.autor     || '',
+      editorial:     payload.editorial || '',
+      genero:        payload.genero    || '',
+      id_cafe:       payload.cafeId,
+      modalidad:     'firme',
+      costo_firme:   '',
+      ubicacion:     'en_cafe',
+      fecha_ingreso: new Date(),
+      id_remito:     '',
+      id_encargo:    id
+    });
+
+    notificarTelegram_(
+      '📋 <b>Nuevo encargo</b>\n' +
+      '☕ Café: ' + payload.cafeName + '\n' +
+      '📚 Libro(s): ' + payload.titulo + (payload.autor ? ' — ' + payload.autor : '') + '\n' +
+      '👤 Nombre: ' + payload.clienteNombre + '\n' +
+      (payload.clienteWhatsapp ? '📱 WhatsApp: ' + payload.clienteWhatsapp + '\n' : '') +
+      (payload.notas ? '📝 Notas: ' + payload.notas + '\n' : '') +
+      (prepago
+        ? '💰 Ya pagado — sin comisión para el café'
+        : '✅ Ya está en stock, cargado directo por Bookbuster')
+    );
+
+    return { ok: true, id };
+  } catch (err) {
     return { ok: false, error: err.message };
   } finally {
     lock.releaseLock();
@@ -646,13 +723,15 @@ function registrarVentaEncargo(payload) {
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(10000)) return { ok: false, error: 'Sistema ocupado.' };
   try {
+    const prepago = !!payload.prepago;
+
     // TODO: cuando se definan comisiones distintas por canal, ramificar
     // acá según `canal` (hoy 30% para cafe y web por igual).
-    const comisionPct   = 30;
-    const comisionMonto = Math.round(payload.precioFinal * comisionPct / 100);
+    const comisionPct   = prepago ? 0 : 30;
+    const comisionMonto = prepago ? 0 : Math.round(payload.precioFinal * comisionPct / 100);
     const id            = newId_('V');
 
-    const deudaAplica = payload.tipoPago === 'cafe';
+    const deudaAplica = !prepago && payload.tipoPago === 'cafe';
     const deudaMonto   = deudaAplica ? (payload.precioFinal - comisionMonto) : 0;
 
     const encargo = getRows_('Encargos').find(r => String(r.id) === String(payload.encargoId));
@@ -666,10 +745,10 @@ function registrarVentaEncargo(payload) {
       id_ejemplar:         payload.idEjemplar || '',
       titulo:              payload.titulo,
       autor:               payload.autor || '',
-      pvp:                 payload.pvp,
-      descuento_pct:       payload.descuentoPct,
-      precio_final:        payload.precioFinal,
-      tipo_pago:           payload.tipoPago,
+      pvp:                 prepago ? '' : payload.pvp,
+      descuento_pct:       prepago ? '' : payload.descuentoPct,
+      precio_final:        prepago ? '' : payload.precioFinal,
+      tipo_pago:           prepago ? 'prepago' : payload.tipoPago,
       modalidad:           'firme',
       comision_pct:        comisionPct,
       comision_monto:      comisionMonto,
@@ -686,14 +765,19 @@ function registrarVentaEncargo(payload) {
     if (payload.idEjemplar) setStockUbicacion_(payload.idEjemplar, 'vendido');
     setEncargoEstado_(payload.encargoId, 'entregado');
     notificarTelegram_(
-      '🎉 <b>Encargo entregado</b>\n' +
-      (canal === 'web' ? '📱 Origen: Catálogo web\n' : '') +
-      '☕ Café: ' + payload.cafeName + '\n' +
-      '📚 ' + payload.titulo + (payload.autor ? ' — ' + payload.autor : '') + '\n' +
-      '💵 Precio final: $' + payload.precioFinal +
-      (payload.descuentoPct > 0 ? ' (−' + payload.descuentoPct + '%)' : '') + '\n' +
-      '💳 Pago: ' + (payload.tipoPago === 'transfer_bookbuster' ? 'Transferencia a Bookbuster' : 'Cobró el café') + '\n' +
-      '📊 Comisión: $' + comisionMonto + ' (30%)'
+      prepago
+        ? '🎉 <b>Encargo entregado</b>\n' +
+          '☕ Café: ' + payload.cafeName + '\n' +
+          '📚 ' + payload.titulo + (payload.autor ? ' — ' + payload.autor : '') + '\n' +
+          '💰 Ya estaba pago — sin comisión para el café'
+        : '🎉 <b>Encargo entregado</b>\n' +
+          (canal === 'web' ? '📱 Origen: Catálogo web\n' : '') +
+          '☕ Café: ' + payload.cafeName + '\n' +
+          '📚 ' + payload.titulo + (payload.autor ? ' — ' + payload.autor : '') + '\n' +
+          '💵 Precio final: $' + payload.precioFinal +
+          (payload.descuentoPct > 0 ? ' (−' + payload.descuentoPct + '%)' : '') + '\n' +
+          '💳 Pago: ' + (payload.tipoPago === 'transfer_bookbuster' ? 'Transferencia a Bookbuster' : 'Cobró el café') + '\n' +
+          '📊 Comisión: $' + comisionMonto + ' (30%)'
     );
     return { ok: true, id, comisionMonto, comisionPct };
   } catch(err) {

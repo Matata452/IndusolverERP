@@ -254,44 +254,47 @@
       <div id="enc-checkout" style="display:none">
         <button class="btn-back" onclick="volverDeCheckout()">← Volver</button>
         <div class="card" id="enc-book-header"></div>
-        <div class="form-row">
-          <span class="label">PVP — consultá en Cúspide o Yenny</span>
-          <div class="input-wrap">
-            <span class="pfx">$</span>
-            <input type="number" id="enc-pvp" placeholder="0" oninput="recalcularEnc()" min="0" inputmode="numeric">
+        <div id="enc-prepago-nota" class="alert" style="display:none">💰 Este encargo ya fue pagado directo a Bookbuster. Solo confirmá que se lo entregaste al cliente.</div>
+        <div id="enc-form-cobro">
+          <div class="form-row">
+            <span class="label">PVP — consultá en Cúspide o Yenny</span>
+            <div class="input-wrap">
+              <span class="pfx">$</span>
+              <input type="number" id="enc-pvp" placeholder="0" oninput="recalcularEnc()" min="0" inputmode="numeric">
+            </div>
           </div>
-        </div>
-        <div class="form-row">
-          <span class="label">Tipo de libro</span>
-          <div class="disc-group">
-            <button id="ed0" class="on" onclick="setDescuentoEnc(0)">Nuevo</button>
-            <button id="ed10" onclick="setDescuentoEnc(10)">Usado −10%</button>
-            <button id="ed20" onclick="setDescuentoEnc(20)">Usado −20%</button>
+          <div class="form-row">
+            <span class="label">Tipo de libro</span>
+            <div class="disc-group">
+              <button id="ed0" class="on" onclick="setDescuentoEnc(0)">Nuevo</button>
+              <button id="ed10" onclick="setDescuentoEnc(10)">Usado −10%</button>
+              <button id="ed20" onclick="setDescuentoEnc(20)">Usado −20%</button>
+            </div>
           </div>
-        </div>
-        <div id="enc-price-box" class="price-box" style="display:none">
-          <div class="big" id="enc-pb-precio"></div>
-          <div class="comis" id="enc-pb-comis"></div>
-        </div>
-        <div class="form-row">
-          <span class="label">¿Cómo pagó el cliente?</span>
-          <div class="radio-group">
-            <label class="radio-opt on" id="enc-opt-bk" onclick="setTipoPagoEnc('transfer_bookbuster')">
-              <input type="radio" name="enc-pago" value="transfer_bookbuster" checked>
-              <div>
-                <div class="rl">Transfirió a Bookbuster</div>
-                <div class="rsl">El cliente pagó directo a la cuenta de Bookbuster</div>
-              </div>
-            </label>
-            <label class="radio-opt" id="enc-opt-cafe" onclick="setTipoPagoEnc('cafe')">
-              <input type="radio" name="enc-pago" value="cafe">
-              <div>
-                <div class="rl">Me pagó a mí (efectivo o tarjeta)</div>
-                <div class="rsl">Vas a tener que transferirle el neto a Bookbuster</div>
-              </div>
-            </label>
+          <div id="enc-price-box" class="price-box" style="display:none">
+            <div class="big" id="enc-pb-precio"></div>
+            <div class="comis" id="enc-pb-comis"></div>
           </div>
-          <div id="enc-cafe-nota" class="alert" style="display:none"></div>
+          <div class="form-row">
+            <span class="label">¿Cómo pagó el cliente?</span>
+            <div class="radio-group">
+              <label class="radio-opt on" id="enc-opt-bk" onclick="setTipoPagoEnc('transfer_bookbuster')">
+                <input type="radio" name="enc-pago" value="transfer_bookbuster" checked>
+                <div>
+                  <div class="rl">Transfirió a Bookbuster</div>
+                  <div class="rsl">El cliente pagó directo a la cuenta de Bookbuster</div>
+                </div>
+              </label>
+              <label class="radio-opt" id="enc-opt-cafe" onclick="setTipoPagoEnc('cafe')">
+                <input type="radio" name="enc-pago" value="cafe">
+                <div>
+                  <div class="rl">Me pagó a mí (efectivo o tarjeta)</div>
+                  <div class="rsl">Vas a tener que transferirle el neto a Bookbuster</div>
+                </div>
+              </label>
+            </div>
+            <div id="enc-cafe-nota" class="alert" style="display:none"></div>
+          </div>
         </div>
         <button class="btn btn-primary" id="enc-btn-checkout" onclick="confirmarVentaEncargo()" disabled>Confirmar entrega</button>
       </div>
@@ -622,7 +625,7 @@ function renderEncargosActivos(enc){
       <div style="font-weight:700;margin-bottom:.3rem">${x(e.titulo)}</div>
       <div style="font-size:.85rem;color:var(--muted)">👤 ${x(e.cliente_nombre)}</div>
       ${e.cliente_whatsapp?`<div style="font-size:.82rem;color:var(--accent);margin-top:2px">📱 ${x(e.cliente_whatsapp)}</div>`:''}
-      <button class="btn btn-primary" style="margin-top:.75rem" onclick="abrirCheckoutEncargo(${i})">Cobrar →</button>
+      <button class="btn btn-primary" style="margin-top:.75rem" onclick="abrirCheckoutEncargo(${i})">${String(e.prepago).toLowerCase()==='true'?'✓ Confirmar entrega':'Cobrar →'}</button>
     </div>`).join('');
 }
 function refrescarEncargos(){
@@ -645,15 +648,19 @@ function confirmarLlegada(encargoId,btn){
 // ── Checkout encargo ─────────────────────────────────────────────
 function abrirCheckoutEncargo(i){
   const enc=_encargosListos[i];
+  const prepago=String(enc.prepago).toLowerCase()==='true';
   selectedEncargo=enc;descuentoEnc=0;tipoPagoEnc='transfer_bookbuster';
   document.getElementById('enc-book-header').innerHTML=`
     <div style="font-weight:700;font-size:1.05rem;margin-bottom:.2rem">${x(enc.titulo)}</div>
     ${enc.autor?`<div style="color:var(--muted);font-size:.88rem;margin-bottom:.4rem">${x(enc.autor)}</div>`:''}
     <div style="font-size:.85rem;color:var(--muted)">👤 ${x(enc.cliente_nombre)}${enc.cliente_whatsapp?' · <span style="color:var(--accent)">'+x(enc.cliente_whatsapp)+'</span>':''}</div>
-    <span class="badge badge-f" style="margin-top:.4rem;display:inline-block">Firme — comisión 30%</span>`;
+    ${prepago?'':'<span class="badge badge-f" style="margin-top:.4rem;display:inline-block">Firme — comisión 30%</span>'}`;
+  document.getElementById('enc-prepago-nota').style.display=prepago?'':'none';
+  document.getElementById('enc-form-cobro').style.display=prepago?'none':'';
   document.getElementById('enc-pvp').value='';
   document.getElementById('enc-price-box').style.display='none';
-  document.getElementById('enc-btn-checkout').disabled=true;
+  document.getElementById('enc-btn-checkout').disabled=!prepago;
+  document.getElementById('enc-btn-checkout').textContent=prepago?'✓ Confirmar entrega':'Confirmar entrega';
   document.getElementById('enc-cafe-nota').style.display='none';
   setDescuentoEnc(0,true);setTipoPagoEnc('transfer_bookbuster',true);
   document.getElementById('enc-activos').style.display='none';
@@ -699,11 +706,39 @@ function recalcularEnc(){
   }
 }
 function confirmarVentaEncargo(){
+  const prepago=String(selectedEncargo.prepago).toLowerCase()==='true';
+  const btn=document.getElementById('enc-btn-checkout');
+
+  if(prepago){
+    btn.disabled=true;btn.textContent='Guardando...';
+    google.script.run.withSuccessHandler(function(res){
+      if(res.ok){
+        document.getElementById('enc-success-detail').innerHTML=
+          `<div class="row"><span>${x(selectedEncargo.titulo)}</span></div><div class="sep"></div><div class="row"><span>💰 Ya estaba pago</span><strong>Sin comisión</strong></div>`;
+        document.getElementById('enc-checkout').style.display='none';
+        document.getElementById('enc-checkout-success').style.display='';
+        loadData();
+      } else {
+        toast('Error: '+res.error);btn.disabled=false;btn.textContent='✓ Confirmar entrega';
+      }
+    }).withFailureHandler(function(){
+      toast('Error al guardar.');btn.disabled=false;btn.textContent='✓ Confirmar entrega';
+    }).registrarVentaEncargo({
+      cafeId:     CAFE_ID,
+      cafeName:   CAFE_NAME,
+      encargoId:  selectedEncargo.id,
+      idEjemplar: selectedEncargo.id_ejemplar||'',
+      titulo:     selectedEncargo.titulo,
+      autor:      selectedEncargo.autor||'',
+      prepago:    true
+    });
+    return;
+  }
+
   const pvp=parseFloat(document.getElementById('enc-pvp').value)||0;
   if(!pvp){toast('Ingresá el precio del libro.');return;}
   const precio=Math.round(pvp*(1-descuentoEnc/100));
   const comision=Math.round(precio*0.3);
-  const btn=document.getElementById('enc-btn-checkout');
   btn.disabled=true;btn.textContent='Guardando...';
   google.script.run.withSuccessHandler(function(res){
     if(res.ok){
