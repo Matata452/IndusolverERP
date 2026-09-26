@@ -665,7 +665,7 @@ function crearEncargoDirecto(payload) {
       (payload.notas ? '📝 Notas: ' + payload.notas + '\n' : '') +
       (prepago
         ? '💰 Ya está pago'
-        : '💰 Se paga en el café al momento de retirar')
+        : '💰 Se paga en el café al momento de retirar — sin comisión (encargo directo de Bookbuster)')
     );
 
     return { ok: true, id };
@@ -724,18 +724,23 @@ function registrarVentaEncargo(payload) {
   if (!lock.tryLock(10000)) return { ok: false, error: 'Sistema ocupado.' };
   try {
     const prepago = !!payload.prepago;
+    const encargo = getRows_('Encargos').find(r => String(r.id) === String(payload.encargoId));
+    const canal   = encargo && encargo.canal === 'web' ? 'web' : 'cafe';
+
+    // Un encargo directo (creado por Bookbuster, no por el café) nunca
+    // lleva comisión, esté pago o no: la columna "prepago" solo se llena
+    // en ese flujo (crearEncargoDirecto), así que su sola presencia ya
+    // identifica el origen — no hace falta calcular nada.
+    const esDirecto = !!(encargo && String(encargo.prepago || '') !== '');
 
     // TODO: cuando se definan comisiones distintas por canal, ramificar
     // acá según `canal` (hoy 30% para cafe y web por igual).
-    const comisionPct   = prepago ? 0 : 30;
-    const comisionMonto = prepago ? 0 : Math.round(payload.precioFinal * comisionPct / 100);
+    const comisionPct   = (prepago || esDirecto) ? 0 : 30;
+    const comisionMonto = (prepago || esDirecto) ? 0 : Math.round(payload.precioFinal * comisionPct / 100);
     const id            = newId_('V');
 
     const deudaAplica = !prepago && payload.tipoPago === 'cafe';
     const deudaMonto   = deudaAplica ? (payload.precioFinal - comisionMonto) : 0;
-
-    const encargo = getRows_('Encargos').find(r => String(r.id) === String(payload.encargoId));
-    const canal   = encargo && encargo.canal === 'web' ? 'web' : 'cafe';
 
     appendRow_('Ventas', {
       id,
@@ -771,13 +776,15 @@ function registrarVentaEncargo(payload) {
           '📚 ' + payload.titulo + (payload.autor ? ' — ' + payload.autor : '') + '\n' +
           '💰 Ya estaba pago — sin comisión para el café'
         : '🎉 <b>Encargo entregado</b>\n' +
-          (canal === 'web' ? '📱 Origen: Catálogo web\n' : '') +
+          (canal === 'web' && !esDirecto ? '📱 Origen: Catálogo web\n' : '') +
           '☕ Café: ' + payload.cafeName + '\n' +
           '📚 ' + payload.titulo + (payload.autor ? ' — ' + payload.autor : '') + '\n' +
           '💵 Precio final: $' + payload.precioFinal +
           (payload.descuentoPct > 0 ? ' (−' + payload.descuentoPct + '%)' : '') + '\n' +
           '💳 Pago: ' + (payload.tipoPago === 'transfer_bookbuster' ? 'Transferencia a Bookbuster' : 'Cobró el café') + '\n' +
-          '📊 Comisión: $' + comisionMonto + ' (30%)'
+          (esDirecto
+            ? '💰 Sin comisión — encargo directo de Bookbuster'
+            : '📊 Comisión: $' + comisionMonto + ' (' + comisionPct + '%)')
     );
     return { ok: true, id, comisionMonto, comisionPct };
   } catch(err) {

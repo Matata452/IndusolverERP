@@ -646,15 +646,17 @@ function confirmarLlegada(encargoId,btn){
 
 
 // ── Checkout encargo ─────────────────────────────────────────────
+function esEncargoDirecto_(enc){return String(enc.prepago||'').trim()!=='';}
 function abrirCheckoutEncargo(i){
   const enc=_encargosListos[i];
   const prepago=String(enc.prepago).toLowerCase()==='true';
+  const esDirecto=esEncargoDirecto_(enc);
   selectedEncargo=enc;descuentoEnc=0;tipoPagoEnc='transfer_bookbuster';
   document.getElementById('enc-book-header').innerHTML=`
     <div style="font-weight:700;font-size:1.05rem;margin-bottom:.2rem">${x(enc.titulo)}</div>
     ${enc.autor?`<div style="color:var(--muted);font-size:.88rem;margin-bottom:.4rem">${x(enc.autor)}</div>`:''}
     <div style="font-size:.85rem;color:var(--muted)">👤 ${x(enc.cliente_nombre)}${enc.cliente_whatsapp?' · <span style="color:var(--accent)">'+x(enc.cliente_whatsapp)+'</span>':''}</div>
-    ${prepago?'':'<span class="badge badge-f" style="margin-top:.4rem;display:inline-block">Firme — comisión 30%</span>'}`;
+    ${prepago?'':(esDirecto?'<span class="badge" style="margin-top:.4rem;display:inline-block">Encargo directo — sin comisión</span>':'<span class="badge badge-f" style="margin-top:.4rem;display:inline-block">Firme — comisión 30%</span>')}`;
   document.getElementById('enc-prepago-nota').style.display=prepago?'':'none';
   document.getElementById('enc-form-cobro').style.display=prepago?'none':'';
   document.getElementById('enc-pvp').value='';
@@ -689,7 +691,8 @@ function setTipoPagoEnc(tipo,silent){
 function recalcularEnc(){
   const pvp=parseFloat(document.getElementById('enc-pvp').value)||0;
   const precio=Math.round(pvp*(1-descuentoEnc/100));
-  const comision=Math.round(precio*0.3);
+  const esDirecto=esEncargoDirecto_(selectedEncargo);
+  const comision=esDirecto?0:Math.round(precio*0.3);
   const neto=precio-comision;
   const box=document.getElementById('enc-price-box');
   const btn=document.getElementById('enc-btn-checkout');
@@ -697,10 +700,14 @@ function recalcularEnc(){
   if(pvp>0){
     box.style.display='';
     document.getElementById('enc-pb-precio').textContent='Precio de venta: '+fmt(precio);
-    document.getElementById('enc-pb-comis').textContent='Tu comisión: '+fmt(comision)+' (30%)';
+    document.getElementById('enc-pb-comis').textContent=esDirecto?'Sin comisión — encargo directo de Bookbuster':'Tu comisión: '+fmt(comision)+' (30%)';
     btn.disabled=false;
-    if(tipoPagoEnc==='cafe'){nota.style.display='';nota.innerHTML='⚠️ Tenés que transferirle a Bookbuster: <strong>'+fmt(neto)+'</strong> (precio − comisión del 30%)';}
-    else{nota.style.display='none';}
+    if(tipoPagoEnc==='cafe'){
+      nota.style.display='';
+      nota.innerHTML=esDirecto
+        ? '⚠️ Tenés que transferirle a Bookbuster: <strong>'+fmt(neto)+'</strong> (sin comisión, es un encargo directo)'
+        : '⚠️ Tenés que transferirle a Bookbuster: <strong>'+fmt(neto)+'</strong> (precio − comisión del 30%)';
+    } else{nota.style.display='none';}
   } else {
     box.style.display='none';btn.disabled=true;nota.style.display='none';
   }
@@ -738,12 +745,13 @@ function confirmarVentaEncargo(){
   const pvp=parseFloat(document.getElementById('enc-pvp').value)||0;
   if(!pvp){toast('Ingresá el precio del libro.');return;}
   const precio=Math.round(pvp*(1-descuentoEnc/100));
-  const comision=Math.round(precio*0.3);
+  const esDirecto=esEncargoDirecto_(selectedEncargo);
+  const comision=esDirecto?0:Math.round(precio*0.3);
   btn.disabled=true;btn.textContent='Guardando...';
   google.script.run.withSuccessHandler(function(res){
     if(res.ok){
       const neto=precio-comision;
-      let rows=`<div class="row"><span>${x(selectedEncargo.titulo)}</span></div><div class="sep"></div><div class="row"><span>Precio de venta</span><strong>${fmt(precio)}</strong></div><div class="row"><span>Tu comisión (30%)</span><strong>${fmt(comision)}</strong></div>`;
+      let rows=`<div class="row"><span>${x(selectedEncargo.titulo)}</span></div><div class="sep"></div><div class="row"><span>Precio de venta</span><strong>${fmt(precio)}</strong></div><div class="row"><span>${esDirecto?'Comisión':'Tu comisión (30%)'}</span><strong>${esDirecto?'Sin comisión (encargo directo)':fmt(comision)}</strong></div>`;
       if(tipoPagoEnc==='cafe')rows+=`<div class="sep"></div><div class="row"><span>⚠️ Transferir a Bookbuster</span><strong>${fmt(neto)}</strong></div>`;
       document.getElementById('enc-success-detail').innerHTML=rows;
       document.getElementById('enc-checkout').style.display='none';
