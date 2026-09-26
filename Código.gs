@@ -664,8 +664,8 @@ function crearEncargoDirecto(payload) {
       (payload.clienteWhatsapp ? '📱 WhatsApp: ' + payload.clienteWhatsapp + '\n' : '') +
       (payload.notas ? '📝 Notas: ' + payload.notas + '\n' : '') +
       (prepago
-        ? '💰 Ya pagado — sin comisión para el café'
-        : '✅ Ya quedó cargado en el stock del café, listo para entregar (no requiere gestión aparte)')
+        ? '💰 Ya está pago'
+        : '💰 Se paga en el café al momento de retirar')
     );
 
     return { ok: true, id };
