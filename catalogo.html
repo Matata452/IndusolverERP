@@ -32,6 +32,7 @@
     font-optical-sizing:auto;
     padding-inline:16px;
     padding-block:20px 40px;
+    min-height:100vh;
   }
   .wrap{max-width:760px;margin:0 auto;padding-bottom:64px;}
 
@@ -800,6 +801,17 @@
         tipo:            'contacto'
       });
   });
+</script>
+<script>
+(function() {
+  var ua = navigator.userAgent || navigator.vendor || window.opera;
+  if (/Instagram|FBAN|FBAV/i.test(ua)) {
+    var banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#222;color:#fff;padding:12px;text-align:center;z-index:9999;font-family:sans-serif;font-size:14px;';
+    banner.innerHTML = 'Para ver el catálogo bien, tocá los 3 puntitos (⋮) arriba a la derecha y elegí "Abrir en el navegador" / "Abrir en Safari".';
+    document.body.prepend(banner);
+  }
+})();
 </script>
 </body>
 </html>
