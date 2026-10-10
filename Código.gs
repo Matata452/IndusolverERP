@@ -28,6 +28,7 @@ function onOpen() {
     .addItem('📩 Gestionar encargo',        'abrirGestionarEncargo')
     .addItem('📊 Generar Reporte Mensual',  'abrirReporteMensual')
     .addItem('💰 Deudas de café',           'abrirDeudasCafe')
+    .addItem('🧾 Cargar montos de encargos directos', 'abrirCargarMontos')
     .addSeparator()
     .addItem('⚙️ Configurar Sheet', 'setupSheet')
     .addToUi();
@@ -38,6 +39,13 @@ function abrirDeudasCafe() {
   const html = HtmlService.createHtmlOutputFromFile('deudas-cafe')
     .setWidth(480).setHeight(560);
   SpreadsheetApp.getUi().showModalDialog(html, '💰 Deudas de café');
+}
+
+
+function abrirCargarMontos() {
+  const html = HtmlService.createHtmlOutputFromFile('cargar-montos')
+    .setWidth(480).setHeight(560);
+  SpreadsheetApp.getUi().showModalDialog(html, '🧾 Cargar montos de encargos directos');
 }
 
 
@@ -840,6 +848,106 @@ function registrarVentaEncargo(payload) {
     );
     return { ok: true, id, comisionMonto, comisionPct };
   } catch(err) {
+    return { ok: false, error: err.message };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+
+// ── Carga retroactiva de montos (herramienta de una sola vez) ─────
+// Encargos directos marcados "Ya está pago" ANTES de que existiera el
+// campo "Monto cobrado" quedaron sin ningún importe registrado en
+// Ventas: ni se pidió el monto al crearlos, ni se guardó al entregarlos
+// (quedaba en blanco). Esta función arma la lista de los que todavía
+// no tienen un monto > 0, para completarlos a mano desde el diálogo
+// "Cargar montos de encargos directos".
+function getEncargosPrepagoSinMonto() {
+  const encargos = getRows_('Encargos').filter(r => String(r.prepago).toUpperCase() === 'TRUE');
+  if (!encargos.length) return [];
+  const stock  = getRows_('Stock');
+  const ventas = getRows_('Ventas').filter(r => r.tipo_pago === 'prepago');
+
+  return encargos.map(e => {
+    const s = stock.find(r => String(r.id_encargo) === String(e.id));
+    const idEjemplar = s ? s.id_ejemplar : '';
+    const venta = idEjemplar ? ventas.find(v => String(v.id_ejemplar) === String(idEjemplar)) : null;
+    return {
+      encargoId:  e.id,
+      idEjemplar: idEjemplar,
+      ventaId:    venta ? venta.id : '',
+      monto:      venta ? (Number(venta.precio_final) || 0) : 0,
+      titulo:     s ? s.titulo : e.descripcion,
+      autor:      s ? s.autor  : '',
+      cafeId:     e.id_cafe,
+      cafe:       e.cafe,
+      cliente:    e.cliente_nombre,
+      fecha:      e.fecha
+    };
+  }).filter(r => !r.monto);
+}
+
+
+// Completa (o crea, si todavía no existe) la Venta de un encargo directo
+// prepago que quedó sin monto. Si ya hay una Venta (de una entrega ya
+// confirmada antes de este fix) le completa el importe; si no, crea una
+// Venta nueva con la fecha del encargo.
+function guardarMontoPrepago(payload) {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) return { ok: false, error: 'Sistema ocupado.' };
+  try {
+    const monto = Math.round(Number(payload.monto) || 0);
+    if (monto <= 0) return { ok: false, error: 'Ingresá un monto válido.' };
+
+    if (payload.ventaId) {
+      const sh      = SS.getSheetByName('Ventas');
+      const vals    = sh.getDataRange().getValues();
+      const headers = vals[0].map(h => String(h).trim());
+      const idCol   = headers.indexOf('id');
+      let fila = -1;
+      for (let i = 1; i < vals.length; i++) {
+        if (String(vals[i][idCol]) === String(payload.ventaId)) { fila = i + 1; break; }
+      }
+      if (fila < 0) return { ok: false, error: 'No se encontró la venta.' };
+      const setCol = (nombre, valor) => {
+        const col = headers.indexOf(nombre);
+        if (col >= 0) sh.getRange(fila, col + 1).setValue(valor);
+      };
+      setCol('pvp', monto);
+      setCol('descuento_pct', 0);
+      setCol('precio_final', monto);
+      setCol('tipo_pago', 'prepago');
+      setCol('comision_pct', 0);
+      setCol('comision_monto', 0);
+    } else {
+      appendRow_('Ventas', {
+        id:                  newId_('V'),
+        fecha:               payload.fecha ? new Date(payload.fecha) : new Date(),
+        id_cafe:             payload.cafeId,
+        cafe:                payload.cafeName,
+        id_ejemplar:         payload.idEjemplar || '',
+        titulo:              payload.titulo,
+        autor:               payload.autor || '',
+        pvp:                 monto,
+        descuento_pct:       0,
+        precio_final:        monto,
+        tipo_pago:           'prepago',
+        modalidad:           'firme',
+        comision_pct:        0,
+        comision_monto:      0,
+        tipo_venta:          'encargo',
+        canal:               'cafe',
+        estado_comision:     'pendiente',
+        fecha_pago_comision: '',
+        notas:               '',
+        deuda_monto:         0,
+        deuda_estado:        '',
+        donante_nombre:      '',
+        donante_telefono:    ''
+      });
+    }
+    return { ok: true };
+  } catch (err) {
     return { ok: false, error: err.message };
   } finally {
     lock.releaseLock();

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;color:#2C1810;background:#FAF7F2;padding:16px;}
+  h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#7C6F64;margin-bottom:8px;}
+  .sub{font-size:12px;color:#7C6F64;margin:-4px 0 10px;line-height:1.4;}
+  #item-list{max-height:380px;overflow-y:auto;}
+  .item{background:#fff;border:1.5px solid #E8E0D5;border-radius:10px;padding:10px 12px;margin-bottom:8px;}
+  .item.saved{opacity:.5;}
+  .item-titulo{font-weight:600;font-size:13px;}
+  .item-sub{font-size:11px;color:#7C6F64;margin-top:2px;}
+  .item-row{display:flex;gap:8px;margin-top:8px;align-items:center;}
+  .item-row input{flex:1;min-width:0;padding:7px 10px;border:1.5px solid #E8E0D5;border-radius:8px;font-size:13px;background:#fff;color:#2C1810;}
+  .item-row input:focus{outline:none;border-color:#8B4513;}
+  .item-row button{flex-shrink:0;padding:7px 14px;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;background:#8B4513;color:#fff;}
+  .item-row button:disabled{opacity:.45;cursor:default;}
+  .item-row .ok-ico{font-size:13px;color:#2D6A4F;font-weight:700;flex-shrink:0;}
+  .empty{text-align:center;padding:24px;color:#7C6F64;font-size:13px;}
+  .msg-error{background:#FFF0F0;border:1px solid #FFAAAA;border-radius:6px;padding:8px 12px;font-size:13px;color:#CC0000;margin-bottom:8px;display:none;}
+  .btn-bar{display:flex;justify-content:flex-end;margin-top:10px;}
+  .btn-cancel{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid #E8E0D5;background:#fff;color:#2C1810;}
+</style>
+</head>
+<body>
+
+<div id="msg-error" class="msg-error"></div>
+
+<h3 style="margin:0">Encargos directos sin monto cargado</h3>
+<div class="sub">Son encargos marcados "Ya está pago" antes de que existiera el campo de monto. Completá cuánto cobraste por cada uno; al guardar, queda registrado en Ventas.</div>
+<div id="item-list"><div class="empty">Cargando...</div></div>
+
+<div class="btn-bar">
+  <button class="btn-cancel" onclick="google.script.host.close()">Cerrar</button>
+</div>
+
+<script>
+let items = [];
+
+window.onload = function() { cargar(); };
+
+function cargar() {
+  const el = document.getElementById('item-list');
+  el.innerHTML = '<div class="empty">Cargando...</div>';
+  google.script.run
+    .withSuccessHandler(function(data) {
+      items = data || [];
+      render();
+    })
+    .withFailureHandler(function() {
+      el.innerHTML = '<div class="empty">Error al cargar.</div>';
+    })
+    .getEncargosPrepagoSinMonto();
+}
+
+function render() {
+  const el = document.getElementById('item-list');
+  if (!items.length) {
+    el.innerHTML = '<div class="empty">No hay nada pendiente — todos los encargos directos pagos tienen su monto cargado 🎉</div>';
+    return;
+  }
+  el.innerHTML = items.map((it, i) => `
+    <div class="item" id="item-${i}">
+      <div class="item-titulo">${x(it.titulo)}${it.autor ? ' — ' + x(it.autor) : ''}</div>
+      <div class="item-sub">${x(it.cafe)} · ${x(it.cliente)} · ${fDate(it.fecha)}</div>
+      <div class="item-row">
+        <input type="number" id="monto-${i}" placeholder="Monto cobrado" min="0" inputmode="numeric">
+        <button id="btn-${i}" onclick="guardar(${i})">Guardar</button>
+      </div>
+    </div>`).join('');
+}
+
+function guardar(i) {
+  const it = items[i];
+  const input = document.getElementById('monto-' + i);
+  const monto = parseFloat(input.value) || 0;
+  if (monto <= 0) { showError('Ingresá un monto válido para "' + it.titulo + '".'); return; }
+
+  const btn = document.getElementById('btn-' + i);
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  input.disabled = true;
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res.ok) {
+        showError(res.error);
+        btn.disabled = false; btn.textContent = 'Guardar'; input.disabled = false;
+        return;
+      }
+      document.getElementById('item-' + i).classList.add('saved');
+      btn.textContent = '✓ Guardado';
+      input.disabled = true;
+    })
+    .withFailureHandler(function() {
+      showError('Error al guardar. Intentá de nuevo.');
+      btn.disabled = false; btn.textContent = 'Guardar'; input.disabled = false;
+    })
+    .guardarMontoPrepago({
+      encargoId:  it.encargoId,
+      idEjemplar: it.idEjemplar,
+      ventaId:    it.ventaId,
+      cafeId:     it.cafeId,
+      cafeName:   it.cafe,
+      titulo:     it.titulo,
+      autor:      it.autor,
+      fecha:      it.fecha,
+      monto:      monto
+    });
+}
+
+function fDate(d) {
+  if (!d) return '';
+  const dt = d instanceof Date ? d : new Date(d);
+  if (isNaN(dt)) return '';
+  return dt.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+}
+
+function x(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function showError(msg) {
+  const el = document.getElementById('msg-error');
+  el.textContent = msg; el.style.display = '';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+</script>
+</body>
+</html>
