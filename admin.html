@@ -149,6 +149,17 @@
   .checkbox-row .ct{font-size:.86rem;font-weight:700;color:#7A4A00;}
   .checkbox-row.checked .ct::after{content:' ✓ activado';font-weight:700;color:#C77800;}
   .checkbox-row .cd{font-size:.76rem;color:#8B6A2F;margin-top:2px;line-height:1.35;}
+
+  /* ── Deudas de café ────────────────────────────────────────── */
+  .dd-list{max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:9px;background:var(--card);margin-top:6px;}
+  .deuda-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-bottom:1px solid #F0E8E0;}
+  .deuda-item:last-child{border-bottom:none;}
+  .deuda-item input[type=checkbox]{width:17px;height:17px;accent-color:var(--accent);flex-shrink:0;}
+  .deuda-info{flex:1;min-width:0;}
+  .deuda-titulo{font-weight:600;font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .deuda-sub{font-size:.72rem;color:var(--muted);}
+  .deuda-monto{font-weight:700;font-size:.84rem;color:#BF360C;flex-shrink:0;white-space:nowrap;}
+  .msg-ok{background:#EAF4EE;border:1px solid #95C9AB;border-radius:8px;padding:9px 11px;font-size:.82rem;color:#2D6A4F;margin-top:10px;display:none;}
 </style>
 </head>
 <body>
@@ -310,7 +321,24 @@
       </div>
     </div>
     <div class="seccion" id="sec-deudas">
-      <div class="placeholder"><span class="ico">💰</span>Deudas de café — próximamente</div>
+      <div class="msg-error" id="dd-err"></div>
+      <div class="msg-ok" id="dd-ok"></div>
+
+      <span class="field-label" style="margin-top:0">Filtrar por café</span>
+      <select id="dd-cafe-filtro"><option value="">— Todos los cafés —</option></select>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 2px">
+        <div class="field-label" style="margin:0">Pendientes de transferir</div>
+        <span id="dd-counter" style="font-size:.76rem;color:var(--muted)">0 pendientes</span>
+      </div>
+      <div class="dd-list" id="dd-list"><div class="empty-mini">Cargando...</div></div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:.85rem;margin-top:12px">
+        <span>Seleccionado:</span>
+        <strong id="dd-total-sel" style="color:var(--accent)">$ 0</strong>
+      </div>
+
+      <button class="btn-full primary" id="dd-btn-pagado" disabled onclick="ddMarcarPagado()">✓ Marcar como pagado</button>
     </div>
     <div class="seccion" id="sec-dashboard">
       <div class="placeholder"><span class="ico">📊</span>Dashboard de ventas — próximamente</div>
@@ -395,6 +423,7 @@ function irA(sec, btn){
   btn.classList.add('on');
   document.getElementById('titulo-seccion').textContent = btn.dataset.titulo;
   if (sec === 'encargos')  enInit();
+  if (sec === 'deudas')    ddInit();
 }
 
 // Helper para las pantallas que vienen (remitos, encargos, deudas,
@@ -977,6 +1006,110 @@ function enResetForm(){
 }
 
 function enShowErr(id, msg){ const el = document.getElementById(id); el.textContent = msg; el.style.display = ''; }
+
+// ── Deudas de café ──────────────────────────────────────────────
+let ddDeudas = [];
+let ddInicializado = false;
+
+function ddInit(){
+  if (ddInicializado) return;
+  ddInicializado = true;
+  adminCall('adminGetCafesLista', [], function(cafes){
+    const sel = document.getElementById('dd-cafe-filtro');
+    (cafes || []).forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id; opt.textContent = c.nombre;
+      sel.appendChild(opt);
+    });
+  });
+  document.getElementById('dd-cafe-filtro').addEventListener('change', ddCargar);
+  ddCargar();
+}
+
+function ddCargar(){
+  const cafeId = document.getElementById('dd-cafe-filtro').value;
+  const el = document.getElementById('dd-list');
+  el.innerHTML = '<div class="empty-mini">Cargando...</div>';
+  ddClearMsgs();
+  adminCall('adminGetDeudasPendientes', [cafeId || null], function(data){
+    ddDeudas = data || [];
+    ddRenderLista();
+  }, function(){ el.innerHTML = '<div class="empty-mini">Error al cargar las deudas.</div>'; });
+}
+
+function ddRenderLista(){
+  const el = document.getElementById('dd-list');
+  document.getElementById('dd-counter').textContent = ddDeudas.length + ' pendiente' + (ddDeudas.length !== 1 ? 's' : '');
+  if (!ddDeudas.length){
+    el.innerHTML = '<div class="empty-mini">No hay deudas pendientes 🎉</div>';
+    ddActualizarTotal();
+    return;
+  }
+  el.innerHTML = ddDeudas.map((d, i) => `
+    <div class="deuda-item">
+      <input type="checkbox" id="dd-chk-${i}" onchange="ddActualizarTotal()">
+      <div class="deuda-info">
+        <div class="deuda-titulo">${x(d.titulo)}</div>
+        <div class="deuda-sub">${x(d.cafe)} · ${fDate(d.fecha)}</div>
+      </div>
+      <div class="deuda-monto">${ddFmt(d.monto)}</div>
+    </div>`).join('');
+  ddActualizarTotal();
+}
+
+function ddActualizarTotal(){
+  let total = 0, checked = 0;
+  ddDeudas.forEach((d, i) => {
+    const chk = document.getElementById('dd-chk-' + i);
+    if (chk && chk.checked) { total += Number(d.monto) || 0; checked++; }
+  });
+  document.getElementById('dd-total-sel').textContent = ddFmt(total);
+  document.getElementById('dd-btn-pagado').disabled = checked === 0;
+}
+
+function ddMarcarPagado(){
+  const ids = [];
+  ddDeudas.forEach((d, i) => {
+    const chk = document.getElementById('dd-chk-' + i);
+    if (chk && chk.checked) ids.push(d.id);
+  });
+  if (!ids.length) return;
+  const btn = document.getElementById('dd-btn-pagado');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  adminCall('adminMarcarDeudasPagadas', [ids], function(res){
+    btn.textContent = '✓ Marcar como pagado';
+    if (!res.ok){ ddShowErr(res.error); btn.disabled = false; return; }
+    ddShowOk(res.actualizadas + ' pago(s) registrado(s).');
+    ddCargar();
+  }, function(){
+    btn.disabled = false; btn.textContent = '✓ Marcar como pagado';
+    ddShowErr('Error al guardar. Intentá de nuevo.');
+  });
+}
+
+function ddFmt(n){
+  n = Math.round(Number(n) || 0);
+  let s = n.toString(), r = '';
+  for (let i = 0; i < s.length; i++) { if (i > 0 && (s.length - i) % 3 === 0) r += '.'; r += s[i]; }
+  return '$ ' + r;
+}
+
+function ddShowErr(msg){
+  const el = document.getElementById('dd-err');
+  el.textContent = msg; el.style.display = '';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+function ddShowOk(msg){
+  const el = document.getElementById('dd-ok');
+  el.textContent = '✓ ' + msg; el.style.display = '';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+function ddClearMsgs(){
+  document.getElementById('dd-err').style.display = 'none';
+  document.getElementById('dd-ok').style.display = 'none';
+}
 </script>
 </body>
 </html>

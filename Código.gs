@@ -1056,6 +1056,18 @@ function adminCrearEncargoDirecto(pin, payload) {
 }
 
 
+// ── Deudas de café (panel admin) ───────────────────────────────
+function adminGetDeudasPendientes(pin, cafeId) {
+  requerirPin_(pin);
+  return getDeudasPendientes(cafeId);
+}
+
+function adminMarcarDeudasPagadas(pin, ids) {
+  requerirPin_(pin);
+  return marcarDeudasPagadas(ids);
+}
+
+
 function notificarTelegram_(mensaje) {
   try {
     const token  = PropertiesService.getScriptProperties().getProperty('TELEGRAM_TOKEN');
