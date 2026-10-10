@@ -1068,6 +1068,53 @@ function adminMarcarDeudasPagadas(pin, ids) {
 }
 
 
+// ── Dashboard de ventas (panel admin) ──────────────────────────
+// Agrupa Ventas por mes, separando lo que vino de un café (local,
+// precio empleados, o un encargo normal con comisión) de los encargos
+// directos (comisión 0 — la única señal confiable, ya que tanto el
+// prepago registrado al crear el encargo como el pagado al retirar
+// quedan con comision_pct 0; un encargo "de verdad" siempre tiene 30%).
+function getDashboardVentas_() {
+  const ventas = getRows_('Ventas');
+  const isTestCafe  = (c) => String(c || '').toLowerCase().includes('test');
+  const isLowercase = (t) => /[a-z]/.test(t) && !/[A-Z]/.test(t);
+  const porMes = {};
+
+  ventas.forEach(v => {
+    const titulo = String(v.titulo || '');
+    if (isTestCafe(v.cafe) || isLowercase(titulo)) return;
+    const fecha = new Date(v.fecha);
+    if (isNaN(fecha)) return;
+    const mes   = fecha.getFullYear() + '-' + String(fecha.getMonth() + 1).padStart(2, '0');
+    const monto = Number(v.precio_final) || 0;
+    const esDirecto = String(v.tipo_venta) === 'encargo' && Number(v.comision_pct) === 0;
+
+    if (!porMes[mes]) porMes[mes] = { cafeMonto: 0, cafeCantidad: 0, directoMonto: 0, directoCantidad: 0 };
+    if (esDirecto) {
+      porMes[mes].directoMonto    += monto;
+      porMes[mes].directoCantidad += 1;
+    } else {
+      porMes[mes].cafeMonto    += monto;
+      porMes[mes].cafeCantidad += 1;
+    }
+  });
+
+  return Object.keys(porMes).sort().reverse().map(mes => ({
+    mes,
+    cafeMonto:       porMes[mes].cafeMonto,
+    cafeCantidad:    porMes[mes].cafeCantidad,
+    directoMonto:    porMes[mes].directoMonto,
+    directoCantidad: porMes[mes].directoCantidad,
+    total:           porMes[mes].cafeMonto + porMes[mes].directoMonto
+  }));
+}
+
+function adminGetDashboard(pin) {
+  requerirPin_(pin);
+  return getDashboardVentas_();
+}
+
+
 function notificarTelegram_(mensaje) {
   try {
     const token  = PropertiesService.getScriptProperties().getProperty('TELEGRAM_TOKEN');

@@ -160,6 +160,19 @@
   .deuda-sub{font-size:.72rem;color:var(--muted);}
   .deuda-monto{font-weight:700;font-size:.84rem;color:#BF360C;flex-shrink:0;white-space:nowrap;}
   .msg-ok{background:#EAF4EE;border:1px solid #95C9AB;border-radius:8px;padding:9px 11px;font-size:.82rem;color:#2D6A4F;margin-top:10px;display:none;}
+
+  /* ── Dashboard ─────────────────────────────────────────────── */
+  .db-month{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
+  .db-month .mes{font-weight:700;font-size:.92rem;margin-bottom:2px;text-transform:capitalize;}
+  .db-month .total{font-size:1.35rem;font-weight:800;color:var(--accent);margin-bottom:9px;}
+  .db-bar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--border);margin-bottom:8px;}
+  .db-bar .seg-cafe{background:#8B4513;}
+  .db-bar .seg-directo{background:#C7A97B;}
+  .db-legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.76rem;color:var(--muted);}
+  .db-legend .lbl{display:flex;align-items:center;gap:5px;}
+  .db-legend .dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0;}
+  .db-legend .dot.cafe{background:#8B4513;}
+  .db-legend .dot.directo{background:#C7A97B;}
 </style>
 </head>
 <body>
@@ -341,7 +354,7 @@
       <button class="btn-full primary" id="dd-btn-pagado" disabled onclick="ddMarcarPagado()">✓ Marcar como pagado</button>
     </div>
     <div class="seccion" id="sec-dashboard">
-      <div class="placeholder"><span class="ico">📊</span>Dashboard de ventas — próximamente</div>
+      <div id="db-list"><div class="empty-mini">Cargando...</div></div>
     </div>
   </main>
 
@@ -424,6 +437,7 @@ function irA(sec, btn){
   document.getElementById('titulo-seccion').textContent = btn.dataset.titulo;
   if (sec === 'encargos')  enInit();
   if (sec === 'deudas')    ddInit();
+  if (sec === 'dashboard') dbInit();
 }
 
 // Helper para las pantallas que vienen (remitos, encargos, deudas,
@@ -1109,6 +1123,60 @@ function ddShowOk(msg){
 function ddClearMsgs(){
   document.getElementById('dd-err').style.display = 'none';
   document.getElementById('dd-ok').style.display = 'none';
+}
+
+// ── Dashboard ───────────────────────────────────────────────────
+let dbInicializado = false;
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+function dbInit(){
+  if (dbInicializado) return;
+  dbInicializado = true;
+  dbCargar();
+}
+
+function dbCargar(){
+  const el = document.getElementById('db-list');
+  el.innerHTML = '<div class="empty-mini">Cargando...</div>';
+  adminCall('adminGetDashboard', [], function(data){
+    dbRender(data || []);
+  }, function(){ el.innerHTML = '<div class="empty-mini">Error al cargar el dashboard.</div>'; });
+}
+
+function dbMesLabel(mes){
+  const partes = mes.split('-');
+  const idx = parseInt(partes[1], 10) - 1;
+  return MESES[idx] + ' ' + partes[0];
+}
+
+function dbFmt(n){
+  n = Math.round(Number(n) || 0);
+  let s = n.toString(), r = '';
+  for (let i = 0; i < s.length; i++) { if (i > 0 && (s.length - i) % 3 === 0) r += '.'; r += s[i]; }
+  return '$ ' + r;
+}
+
+function dbRender(meses){
+  const el = document.getElementById('db-list');
+  if (!meses.length){ el.innerHTML = '<div class="empty-mini">Todavía no hay ventas registradas.</div>'; return; }
+  el.innerHTML = meses.map(m => {
+    const total = m.total || 0;
+    const pctCafe = total > 0 ? Math.round(m.cafeMonto / total * 100) : 0;
+    const pctDirecto = total > 0 ? 100 - pctCafe : 0;
+    return `
+    <div class="db-month">
+      <div class="mes">${x(dbMesLabel(m.mes))}</div>
+      <div class="total">${dbFmt(total)}</div>
+      <div class="db-bar">
+        <div class="seg-cafe" style="width:${pctCafe}%"></div>
+        <div class="seg-directo" style="width:${pctDirecto}%"></div>
+      </div>
+      <div class="db-legend">
+        <span class="lbl"><span class="dot cafe"></span>Café: ${dbFmt(m.cafeMonto)} (${m.cafeCantidad})</span>
+        <span class="lbl"><span class="dot directo"></span>Directo: ${dbFmt(m.directoMonto)} (${m.directoCantidad})</span>
+      </div>
+    </div>`;
+  }).join('');
 }
 </script>
 </body>
