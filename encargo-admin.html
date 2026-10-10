@@ -131,6 +131,11 @@
     </div>
   </label>
 
+  <div id="d-monto-wrap" style="display:none">
+    <span class="label">Monto cobrado ($) *</span>
+    <input type="number" id="d-monto" placeholder="0" min="0" inputmode="numeric">
+  </div>
+
   <div class="error" id="err-msg-directo"></div>
   <button class="btn btn-primary" id="btn-directo" disabled onclick="confirmarDirecto()">✓ Crear encargo</button>
   <button class="btn" style="background:#fff;border:1.5px solid #E8E0D5;color:#2C1810;margin-top:6px" onclick="volver()">← Volver</button>
@@ -316,12 +321,17 @@ function actualizarBotones(){
   document.getElementById('btn-confirm').disabled = !pickedGestion;
   const cafe = document.getElementById('d-cafe').value;
   const nombre = document.getElementById('d-cliente').value.trim();
-  document.getElementById('btn-directo').disabled = !(pickedDirecto && cafe && nombre);
+  const prepago = document.getElementById('d-prepago').checked;
+  const monto = parseFloat(document.getElementById('d-monto').value) || 0;
+  document.getElementById('btn-directo').disabled = !(pickedDirecto && cafe && nombre && (!prepago || monto > 0));
 }
 document.getElementById('d-cafe').addEventListener('change', actualizarBotones);
 document.getElementById('d-cliente').addEventListener('input', actualizarBotones);
+document.getElementById('d-monto').addEventListener('input', actualizarBotones);
 document.getElementById('d-prepago').addEventListener('change', function(){
   this.closest('.checkbox-row').classList.toggle('checked', this.checked);
+  document.getElementById('d-monto-wrap').style.display = this.checked ? '' : 'none';
+  actualizarBotones();
 });
 
 // ── Confirmar: encargo que ya venía pendiente ──────────────────────
@@ -365,10 +375,12 @@ function confirmarDirecto(){
   const wsp = document.getElementById('d-wsp').value.trim();
   const notas = document.getElementById('d-notas').value.trim();
   const prepago = document.getElementById('d-prepago').checked;
+  const monto = parseFloat(document.getElementById('d-monto').value) || 0;
 
   if (!pickedDirecto){ showErr('err-msg-directo', 'Elegí un libro del Catálogo.'); return; }
   if (!cafeId){ showErr('err-msg-directo', 'Seleccioná un café.'); return; }
   if (!cliente){ showErr('err-msg-directo', 'Ingresá el nombre del cliente.'); return; }
+  if (prepago && monto <= 0){ showErr('err-msg-directo', 'Ingresá el monto cobrado.'); return; }
 
   const btn = document.getElementById('btn-directo');
   btn.disabled = true; btn.textContent = 'Guardando...';
@@ -400,7 +412,8 @@ function confirmarDirecto(){
       clienteNombre:   cliente,
       clienteWhatsapp: wsp,
       notas,
-      prepago
+      prepago,
+      monto: prepago ? monto : ''
     });
 }
 
@@ -417,6 +430,9 @@ function resetForm(){
   document.getElementById('d-wsp').value = '';
   document.getElementById('d-notas').value = '';
   document.getElementById('d-prepago').checked = false;
+  document.getElementById('d-monto').value = '';
+  document.getElementById('d-monto-wrap').style.display = 'none';
+  document.querySelector('#step-directo .checkbox-row').classList.remove('checked');
   document.getElementById('err-msg').style.display = 'none';
   document.getElementById('err-msg-directo').style.display = 'none';
   document.getElementById('step2').style.display = 'none';
