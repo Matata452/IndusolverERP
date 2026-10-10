@@ -1007,6 +1007,38 @@ function requerirPin_(pin) {
 }
 
 
+// ── Remitos (panel admin) ──────────────────────────────────────
+function adminGetCafesLista(pin) {
+  requerirPin_(pin);
+  return getCafesLista();
+}
+
+function adminGetCatalogo(pin) {
+  requerirPin_(pin);
+  return getCatalogo();
+}
+
+function adminAgregarLibroAlCatalogo(pin, libro) {
+  requerirPin_(pin);
+  return agregarLibroAlCatalogo(libro);
+}
+
+function adminGetStockParaRetiro(pin, cafeId) {
+  requerirPin_(pin);
+  return getStockParaRetiro(cafeId);
+}
+
+function adminCrearRemitoEntrega(pin, data) {
+  requerirPin_(pin);
+  return crearRemitoEntrega(data);
+}
+
+function adminCrearRemitoRetiro(pin, data) {
+  requerirPin_(pin);
+  return crearRemitoRetiro(data);
+}
+
+
 function notificarTelegram_(mensaje) {
   try {
     const token  = PropertiesService.getScriptProperties().getProperty('TELEGRAM_TOKEN');
