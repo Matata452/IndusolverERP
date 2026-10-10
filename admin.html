@@ -120,6 +120,35 @@
   .success-box{text-align:center;padding:20px 10px;}
   .success-box .ico{font-size:2.2rem;margin-bottom:6px;}
   .success-box p{color:var(--muted);font-size:.85rem;}
+
+  /* ── Encargos ──────────────────────────────────────────────── */
+  .btn-directo{
+    width:100%;background:none;border:1.5px dashed #C7A97B;color:var(--accent);
+    border-radius:9px;padding:10px;font-size:.85rem;font-weight:700;cursor:pointer;
+    margin-bottom:14px;font-family:inherit;
+  }
+  .enc-card{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:border-color .15s;}
+  .enc-card:hover{border-color:var(--accent);}
+  .enc-card.on{border-color:var(--accent);background:#FFF8F5;}
+  .enc-title{font-weight:600;font-size:.9rem;}
+  .enc-sub{font-size:.78rem;color:var(--muted);margin-top:2px;}
+  .picked{
+    background:#EAF4EE;border:1px solid #B9DCC5;border-radius:8px;
+    padding:9px 11px;margin-top:8px;font-size:.85rem;color:#2D6A4F;
+    display:flex;justify-content:space-between;align-items:center;gap:8px;
+  }
+  .picked b{display:block;font-size:.88rem;}
+  .picked button{background:none;border:none;color:#2D6A4F;font-size:.78rem;text-decoration:underline;cursor:pointer;flex-shrink:0;font-family:inherit;}
+  .checkbox-row{
+    display:flex;gap:10px;align-items:flex-start;cursor:pointer;
+    background:#FFF3E0;border:1.5px solid #FFCC80;border-radius:9px;
+    padding:11px 12px;margin-top:16px;transition:background .15s,border-color .15s;
+  }
+  .checkbox-row.checked{background:#FFE4B0;border-color:#C77800;}
+  .checkbox-row input{width:auto;margin-top:2px;accent-color:var(--accent);flex-shrink:0;transform:scale(1.25);cursor:pointer;}
+  .checkbox-row .ct{font-size:.86rem;font-weight:700;color:#7A4A00;}
+  .checkbox-row.checked .ct::after{content:' ✓ activado';font-weight:700;color:#C77800;}
+  .checkbox-row .cd{font-size:.76rem;color:#8B6A2F;margin-top:2px;line-height:1.35;}
 </style>
 </head>
 <body>
@@ -209,7 +238,76 @@
       </div>
     </div>
     <div class="seccion" id="sec-encargos">
-      <div class="placeholder"><span class="ico">📩</span>Gestionar encargo — próximamente</div>
+      <div id="en-step1">
+        <button class="btn-directo" onclick="enIrADirecto()">➕ Nuevo encargo directo</button>
+        <div class="field-label" style="margin-top:0">Pendientes (de un café o del catálogo web)</div>
+        <div id="en-list"><div class="empty-mini">Cargando...</div></div>
+      </div>
+
+      <div id="en-step2" style="display:none">
+        <button class="btn-link" onclick="enVolver()">← Volver</button>
+        <div id="en-resumen" style="background:#EAF4EE;border-radius:9px;padding:10px 12px;margin:8px 0;font-size:.82rem;color:#2D6A4F;"></div>
+
+        <span class="field-label" style="margin-top:0">Buscar libro en el Catálogo</span>
+        <div class="search-wrap">
+          <input type="text" id="en-g-search" placeholder="Título, autor o ISBN..." oninput="enFiltrarCatalogo('gestion', this.value)" autocomplete="off">
+        </div>
+        <div class="results-list" id="en-g-results"><div class="empty-mini">Escribí para buscar</div></div>
+        <div id="en-g-picked"></div>
+        <button class="btn-link" onclick="enToggleAgregar('gestion')">+ ¿No está? Agregarlo al Catálogo</button>
+        <div class="panel-sub" id="en-g-panel-nuevo"></div>
+
+        <div class="msg-error" id="en-err"></div>
+        <button class="btn-full primary" id="en-btn-confirm" disabled onclick="enConfirmarGestion()">✓ Confirmar y enviar al café</button>
+      </div>
+
+      <div id="en-step-directo" style="display:none">
+        <button class="btn-link" onclick="enVolver()">← Volver</button>
+        <div style="font-size:.78rem;color:var(--muted);margin:6px 0 10px">Para pedidos que te llegan a vos directamente, sin pasar por el catálogo de un café.</div>
+
+        <span class="field-label" style="margin-top:0">Café donde se entrega *</span>
+        <select id="en-d-cafe"><option value="">— Seleccioná un café —</option></select>
+
+        <span class="field-label">Buscar libro en el Catálogo</span>
+        <div class="search-wrap">
+          <input type="text" id="en-d-search" placeholder="Título, autor o ISBN..." oninput="enFiltrarCatalogo('directo', this.value)" autocomplete="off">
+        </div>
+        <div class="results-list" id="en-d-results"><div class="empty-mini">Escribí para buscar</div></div>
+        <div id="en-d-picked"></div>
+        <button class="btn-link" onclick="enToggleAgregar('directo')">+ ¿No está? Agregarlo al Catálogo</button>
+        <div class="panel-sub" id="en-d-panel-nuevo"></div>
+
+        <span class="field-label">Nombre del cliente *</span>
+        <input type="text" id="en-d-cliente" placeholder="Nombre y apellido">
+        <span class="field-label">WhatsApp (opcional)</span>
+        <input type="text" id="en-d-wsp" placeholder="11 1234-5678">
+        <span class="field-label">Notas (opcional)</span>
+        <input type="text" id="en-d-notas" placeholder="Cualquier detalle extra...">
+
+        <label class="checkbox-row">
+          <input type="checkbox" id="en-d-prepago">
+          <div>
+            <div class="ct">Ya está pago</div>
+            <div class="cd">Para pedidos que ya cobraste vos directamente. El café no va a ver precio ni comisión — solo confirma la entrega.</div>
+          </div>
+        </label>
+
+        <div id="en-d-monto-wrap" style="display:none">
+          <span class="field-label">Monto cobrado ($) *</span>
+          <input type="number" id="en-d-monto" placeholder="0" min="0" inputmode="numeric">
+        </div>
+
+        <div class="msg-error" id="en-err-directo"></div>
+        <button class="btn-full primary" id="en-btn-directo" disabled onclick="enConfirmarDirecto()">✓ Crear encargo</button>
+      </div>
+
+      <div id="en-step3" style="display:none">
+        <div class="success-box">
+          <div class="ico">✅</div>
+          <p id="en-success-msg"></p>
+        </div>
+        <button class="btn-full primary" onclick="enResetForm()">Gestionar otro encargo</button>
+      </div>
     </div>
     <div class="seccion" id="sec-deudas">
       <div class="placeholder"><span class="ico">💰</span>Deudas de café — próximamente</div>
@@ -296,6 +394,7 @@ function irA(sec, btn){
   document.querySelectorAll('nav.bottom-nav button').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
   document.getElementById('titulo-seccion').textContent = btn.dataset.titulo;
+  if (sec === 'encargos')  enInit();
 }
 
 // Helper para las pantallas que vienen (remitos, encargos, deudas,
@@ -316,6 +415,7 @@ const GENEROS = [
 ];
 
 function x(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fDate(d){ if(!d) return ''; const dt = d instanceof Date ? d : new Date(d); if (isNaN(dt)) return ''; return dt.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'}); }
 
 // ── Remitos ─────────────────────────────────────────────────────
 let rmModo = 'entrega';
@@ -593,6 +693,290 @@ function rmShowErr(msg){
   el.textContent = msg; el.style.display = '';
   setTimeout(() => el.style.display = 'none', 4000);
 }
+
+// ── Encargos ────────────────────────────────────────────────────
+let enCafes = [];
+let enCatalogo = [];
+let enEncargos = [], enSelected = null;
+let enPickedGestion = null, enPickedDirecto = null;
+let enResultsGestion = [], enResultsDirecto = [];
+let enInicializado = false;
+
+function enInit(){
+  if (enInicializado) return;
+  enInicializado = true;
+
+  adminCall('adminGetCafesLista', [], function(cafes){
+    enCafes = cafes || [];
+    const sel = document.getElementById('en-d-cafe');
+    enCafes.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id; opt.textContent = c.nombre;
+      sel.appendChild(opt);
+    });
+  });
+
+  adminCall('adminGetCatalogo', [], function(data){ enCatalogo = data || []; });
+
+  cargarEncargosPendientes();
+
+  document.getElementById('en-d-cafe').addEventListener('change', enActualizarBotones);
+  document.getElementById('en-d-cliente').addEventListener('input', enActualizarBotones);
+  document.getElementById('en-d-monto').addEventListener('input', enActualizarBotones);
+  document.getElementById('en-d-prepago').addEventListener('change', function(){
+    this.closest('.checkbox-row').classList.toggle('checked', this.checked);
+    document.getElementById('en-d-monto-wrap').style.display = this.checked ? '' : 'none';
+    enActualizarBotones();
+  });
+}
+
+function cargarEncargosPendientes(){
+  adminCall('adminGetPendingEncargos', [], function(d){ enEncargos = d || []; enRenderList(); },
+    function(){ document.getElementById('en-list').innerHTML = '<div class="empty-mini">Error al cargar.</div>'; });
+}
+
+function enRenderList(){
+  const el = document.getElementById('en-list');
+  if (!enEncargos.length){ el.innerHTML = '<div class="empty-mini">No hay encargos pendientes.</div>'; return; }
+  el.innerHTML = enEncargos.map((e,i) => `
+    <div class="enc-card" id="en-ecard-${i}" onclick="enSelectEnc(${i})">
+      <div class="enc-title">${x(e.descripcion)}</div>
+      <div class="enc-sub">${x(e.cafe)} · ${x(e.cliente_nombre)}${e.cliente_whatsapp?' · '+x(e.cliente_whatsapp):''}</div>
+      <div class="enc-sub" style="margin-top:2px;color:#aaa">${fDate(e.fecha)}</div>
+    </div>`).join('');
+}
+
+function enSelectEnc(i){
+  document.querySelectorAll('.enc-card').forEach(c => c.classList.remove('on'));
+  document.getElementById('en-ecard-'+i).classList.add('on');
+  enSelected = enEncargos[i];
+  const r = document.getElementById('en-resumen');
+  r.innerHTML = '<strong>'+x(enSelected.cafe)+'</strong> · '+x(enSelected.descripcion)+'<br>'+x(enSelected.cliente_nombre)+(enSelected.cliente_whatsapp?' · '+x(enSelected.cliente_whatsapp):'');
+  document.getElementById('en-step1').style.display = 'none';
+  document.getElementById('en-step2').style.display = '';
+}
+
+function enIrADirecto(){
+  document.getElementById('en-step1').style.display = 'none';
+  document.getElementById('en-step-directo').style.display = '';
+}
+
+function enVolver(){
+  document.getElementById('en-step1').style.display = '';
+  document.getElementById('en-step2').style.display = 'none';
+  document.getElementById('en-step-directo').style.display = 'none';
+  document.getElementById('en-err').style.display = 'none';
+  document.getElementById('en-err-directo').style.display = 'none';
+}
+
+function enFiltrarCatalogo(ctx, q){
+  const el = document.getElementById(ctx === 'gestion' ? 'en-g-results' : 'en-d-results');
+  if (!q.trim()){ el.innerHTML = '<div class="empty-mini">Escribí para buscar</div>'; return; }
+  const s = q.toLowerCase();
+  const res = enCatalogo.filter(b =>
+    (b.titulo || '').toLowerCase().includes(s) ||
+    (b.autor  || '').toLowerCase().includes(s) ||
+    String(b.isbn || '').includes(s)
+  );
+  if (!res.length){ el.innerHTML = '<div class="empty-mini">No encontrado. Usá "Agregarlo al Catálogo" abajo.</div>'; return; }
+  const results = res.slice(0, 20);
+  if (ctx === 'gestion') enResultsGestion = results; else enResultsDirecto = results;
+  el.innerHTML = results.map((b,i) => `
+    <div class="result-item">
+      <div class="result-info">
+        <div class="result-title">${x(b.titulo)}</div>
+        <div class="result-sub">${x(b.autor)}${b.genero ? ' · '+x(b.genero) : ''}</div>
+      </div>
+      <button class="btn-add-book" onclick="enElegirLibro('${ctx}', ${i})">+ Elegir</button>
+    </div>`).join('');
+}
+
+function enElegirLibro(ctx, i){
+  const b = (ctx === 'gestion' ? enResultsGestion : enResultsDirecto)[i];
+  if (ctx === 'gestion') enPickedGestion = b; else enPickedDirecto = b;
+  enRenderPicked(ctx, b);
+  document.getElementById(ctx === 'gestion' ? 'en-g-search' : 'en-d-search').value = '';
+  document.getElementById(ctx === 'gestion' ? 'en-g-results' : 'en-d-results').innerHTML = '<div class="empty-mini">Escribí para buscar</div>';
+  enActualizarBotones();
+}
+
+function enRenderPicked(ctx, b){
+  document.getElementById(ctx === 'gestion' ? 'en-g-picked' : 'en-d-picked').innerHTML = `
+    <div class="picked">
+      <div><b>${x(b.titulo)}</b>${x(b.autor)}${b.genero ? ' · '+x(b.genero) : ''}</div>
+      <button onclick="enQuitarPicked('${ctx}')">quitar</button>
+    </div>`;
+}
+
+function enQuitarPicked(ctx){
+  if (ctx === 'gestion') enPickedGestion = null; else enPickedDirecto = null;
+  document.getElementById(ctx === 'gestion' ? 'en-g-picked' : 'en-d-picked').innerHTML = '';
+  enActualizarBotones();
+}
+
+function enToggleAgregar(ctx){
+  const p = document.getElementById(ctx === 'gestion' ? 'en-g-panel-nuevo' : 'en-d-panel-nuevo');
+  if (!p.innerHTML) p.innerHTML = enFormAgregar(ctx);
+  p.classList.toggle('show');
+}
+
+function enFormAgregar(ctx){
+  return `
+    <h4>Agregar libro al Catálogo</h4>
+    <div class="form-grid">
+      <div class="full"><span class="field-label">Título *</span><input type="text" id="en-na-titulo-${ctx}"></div>
+      <div><span class="field-label">Autor *</span><input type="text" id="en-na-autor-${ctx}"></div>
+      <div><span class="field-label">ISBN</span><input type="text" id="en-na-isbn-${ctx}"></div>
+      <div><span class="field-label">Editorial</span><input type="text" id="en-na-editorial-${ctx}"></div>
+      <div><span class="field-label">Género *</span>
+        <select id="en-na-genero-${ctx}"><option value="">— Elegí —</option>${GENEROS.map(g=>`<option>${x(g)}</option>`).join('')}</select>
+      </div>
+      <div class="full"><span class="field-label">Por qué leerlo (opcional)</span><textarea id="en-na-resumen-${ctx}" placeholder="2-3 oraciones..."></textarea></div>
+    </div>
+    <button class="btn-full primary" style="margin-top:10px" id="en-na-btn-${ctx}" onclick="enGuardarNuevo('${ctx}')">Guardar en Catálogo</button>
+  `;
+}
+
+function enGuardarNuevo(ctx){
+  const titulo = document.getElementById('en-na-titulo-'+ctx).value.trim();
+  const autor  = document.getElementById('en-na-autor-'+ctx).value.trim();
+  const isbn   = document.getElementById('en-na-isbn-'+ctx).value.trim();
+  const editorial = document.getElementById('en-na-editorial-'+ctx).value.trim();
+  const genero = document.getElementById('en-na-genero-'+ctx).value;
+  const resumen = document.getElementById('en-na-resumen-'+ctx).value.trim();
+
+  if (!titulo || !autor || !genero){
+    enShowErr(ctx === 'gestion' ? 'en-err' : 'en-err-directo', 'Completá título, autor y género.');
+    return;
+  }
+  const btn = document.getElementById('en-na-btn-'+ctx);
+  btn.disabled = true; btn.textContent = 'Guardando...';
+
+  adminCall('adminAgregarLibroAlCatalogo', [{ titulo, autor, isbn, editorial, genero, resumen }], function(res){
+    btn.disabled = false; btn.textContent = 'Guardar en Catálogo';
+    if (!res.ok){ enShowErr(ctx === 'gestion' ? 'en-err' : 'en-err-directo', res.error); return; }
+    enCatalogo.push(res.libro);
+    if (ctx === 'gestion') enPickedGestion = res.libro; else enPickedDirecto = res.libro;
+    enRenderPicked(ctx, res.libro);
+    document.getElementById(ctx === 'gestion' ? 'en-g-panel-nuevo' : 'en-d-panel-nuevo').classList.remove('show');
+    enActualizarBotones();
+  }, function(){
+    btn.disabled = false; btn.textContent = 'Guardar en Catálogo';
+    enShowErr(ctx === 'gestion' ? 'en-err' : 'en-err-directo', 'Error al guardar. Intentá de nuevo.');
+  });
+}
+
+function enActualizarBotones(){
+  document.getElementById('en-btn-confirm').disabled = !enPickedGestion;
+  const cafe = document.getElementById('en-d-cafe').value;
+  const nombre = document.getElementById('en-d-cliente').value.trim();
+  const prepago = document.getElementById('en-d-prepago').checked;
+  const monto = parseFloat(document.getElementById('en-d-monto').value) || 0;
+  document.getElementById('en-btn-directo').disabled = !(enPickedDirecto && cafe && nombre && (!prepago || monto > 0));
+}
+
+function enConfirmarGestion(){
+  if (!enPickedGestion){ enShowErr('en-err', 'Elegí un libro del Catálogo.'); return; }
+  const btn = document.getElementById('en-btn-confirm');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  adminCall('adminGestionarEncargo', [{
+    encargoId: enSelected.id,
+    cafeId:    enSelected.id_cafe,
+    titulo:    enPickedGestion.titulo,
+    autor:     enPickedGestion.autor,
+    editorial: enPickedGestion.editorial,
+    isbn:      enPickedGestion.isbn,
+    genero:    enPickedGestion.genero
+  }], function(res){
+    if (res.ok){
+      document.getElementById('en-success-msg').textContent =
+        '¡Listo! "'+enPickedGestion.titulo+'" ya está en camino a '+enSelected.cafe+'.';
+      document.getElementById('en-step2').style.display = 'none';
+      document.getElementById('en-step3').style.display = '';
+    } else {
+      enShowErr('en-err', 'Error: '+res.error);
+      btn.disabled = false; btn.textContent = '✓ Confirmar y enviar al café';
+    }
+  }, function(){
+    enShowErr('en-err', 'Error al guardar. Intentá de nuevo.');
+    btn.disabled = false; btn.textContent = '✓ Confirmar y enviar al café';
+  });
+}
+
+function enConfirmarDirecto(){
+  const cafeSel = document.getElementById('en-d-cafe');
+  const cafeId = cafeSel.value;
+  const cafeName = cafeSel.options[cafeSel.selectedIndex].textContent;
+  const cliente = document.getElementById('en-d-cliente').value.trim();
+  const wsp = document.getElementById('en-d-wsp').value.trim();
+  const notas = document.getElementById('en-d-notas').value.trim();
+  const prepago = document.getElementById('en-d-prepago').checked;
+  const monto = parseFloat(document.getElementById('en-d-monto').value) || 0;
+
+  if (!enPickedDirecto){ enShowErr('en-err-directo', 'Elegí un libro del Catálogo.'); return; }
+  if (!cafeId){ enShowErr('en-err-directo', 'Seleccioná un café.'); return; }
+  if (!cliente){ enShowErr('en-err-directo', 'Ingresá el nombre del cliente.'); return; }
+  if (prepago && monto <= 0){ enShowErr('en-err-directo', 'Ingresá el monto cobrado.'); return; }
+
+  const btn = document.getElementById('en-btn-directo');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+
+  adminCall('adminCrearEncargoDirecto', [{
+    cafeId, cafeName,
+    titulo:    enPickedDirecto.titulo,
+    autor:     enPickedDirecto.autor,
+    editorial: enPickedDirecto.editorial,
+    isbn:      enPickedDirecto.isbn,
+    genero:    enPickedDirecto.genero,
+    clienteNombre:   cliente,
+    clienteWhatsapp: wsp,
+    notas,
+    prepago,
+    monto: prepago ? monto : ''
+  }], function(res){
+    if (res.ok){
+      document.getElementById('en-success-msg').textContent =
+        '¡Listo! Encargo directo de "'+enPickedDirecto.titulo+'" creado para '+cafeName +
+        (prepago ? ' (ya está pago — el café no va a ver precio ni comisión).' : '.');
+      document.getElementById('en-step-directo').style.display = 'none';
+      document.getElementById('en-step3').style.display = '';
+    } else {
+      enShowErr('en-err-directo', 'Error: '+res.error);
+      btn.disabled = false; btn.textContent = '✓ Crear encargo';
+    }
+  }, function(){
+    enShowErr('en-err-directo', 'Error al guardar. Intentá de nuevo.');
+    btn.disabled = false; btn.textContent = '✓ Crear encargo';
+  });
+}
+
+function enResetForm(){
+  enSelected = null; enPickedGestion = null; enPickedDirecto = null;
+  document.getElementById('en-g-picked').innerHTML = '';
+  document.getElementById('en-d-picked').innerHTML = '';
+  document.getElementById('en-g-panel-nuevo').classList.remove('show');
+  document.getElementById('en-d-panel-nuevo').classList.remove('show');
+  document.getElementById('en-g-search').value = '';
+  document.getElementById('en-d-search').value = '';
+  document.getElementById('en-d-cafe').value = '';
+  document.getElementById('en-d-cliente').value = '';
+  document.getElementById('en-d-wsp').value = '';
+  document.getElementById('en-d-notas').value = '';
+  document.getElementById('en-d-prepago').checked = false;
+  document.getElementById('en-d-monto').value = '';
+  document.getElementById('en-d-monto-wrap').style.display = 'none';
+  document.querySelector('#en-step-directo .checkbox-row').classList.remove('checked');
+  document.getElementById('en-err').style.display = 'none';
+  document.getElementById('en-err-directo').style.display = 'none';
+  document.getElementById('en-step2').style.display = 'none';
+  document.getElementById('en-step-directo').style.display = 'none';
+  document.getElementById('en-step3').style.display = 'none';
+  document.getElementById('en-step1').style.display = '';
+  enActualizarBotones();
+  cargarEncargosPendientes();
+}
+
+function enShowErr(id, msg){ const el = document.getElementById(id); el.textContent = msg; el.style.display = ''; }
 </script>
 </body>
 </html>

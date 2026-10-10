@@ -1039,6 +1039,23 @@ function adminCrearRemitoRetiro(pin, data) {
 }
 
 
+// ── Encargos (panel admin) ─────────────────────────────────────
+function adminGetPendingEncargos(pin) {
+  requerirPin_(pin);
+  return getPendingEncargos();
+}
+
+function adminGestionarEncargo(pin, payload) {
+  requerirPin_(pin);
+  return gestionarEncargo(payload);
+}
+
+function adminCrearEncargoDirecto(pin, payload) {
+  requerirPin_(pin);
+  return crearEncargoDirecto(payload);
+}
+
+
 function notificarTelegram_(mensaje) {
   try {
     const token  = PropertiesService.getScriptProperties().getProperty('TELEGRAM_TOKEN');
