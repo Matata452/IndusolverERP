@@ -67,6 +67,12 @@ function doGet(e) {
   const params   = (e && e.parameter) || {};
   const catParam = (params.catalogo || '').toLowerCase().trim();
 
+  if (params.admin) {
+    return HtmlService.createHtmlOutputFromFile('admin')
+      .setTitle('Bookbuster · Admin')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
 
   const esCatalogo = !!catParam;
   const slug = esCatalogo ? catParam : (params.cafe || '').toLowerCase().trim();
@@ -969,6 +975,34 @@ function setEncargoEstado_(encargoId, estado) {
       cell.setValue(estado);
       return;
     }
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════════
+//  Panel Admin (Web App móvil) — ?admin=1
+//  El despliegue queda "Acceso: Cualquier usuario" para que el
+//  catálogo público siga funcionando, así que el panel necesita su
+//  propia capa de seguridad: un PIN validado del lado del servidor
+//  en CADA acción (no solo en la pantalla de login), seteado una vez
+//  en Propiedades del Script → ADMIN_PIN (Configuración del proyecto
+//  en el editor de Apps Script → Propiedades del Script).
+//
+//  Las funciones "admin*" son wrappers que validan el PIN y después
+//  llaman a las funciones de siempre (crearRemitoEntrega, etc.), que
+//  quedan sin tocar y siguen funcionando igual para el café y los
+//  diálogos del Sheet.
+// ════════════════════════════════════════════════════════════════
+
+function adminVerificarPin(pin) {
+  const real = PropertiesService.getScriptProperties().getProperty('ADMIN_PIN');
+  return { ok: !!real && String(pin || '') === String(real) };
+}
+
+function requerirPin_(pin) {
+  const real = PropertiesService.getScriptProperties().getProperty('ADMIN_PIN');
+  if (!real || String(pin || '') !== String(real)) {
+    throw new Error('PIN incorrecto.');
   }
 }
 
