@@ -806,10 +806,15 @@ function registrarVentaEncargo(payload) {
     if (prepago) {
       if (payload.idEjemplar) setStockUbicacion_(payload.idEjemplar, 'vendido');
       setEncargoEstado_(payload.encargoId, 'entregado');
+      const encargoPrepago = getRows_('Encargos').find(r => String(r.id) === String(payload.encargoId));
       notificarTelegram_(
         '🎉 <b>Encargo entregado</b>\n' +
         '☕ Café: ' + payload.cafeName + '\n' +
         '📚 ' + payload.titulo + (payload.autor ? ' — ' + payload.autor : '') + '\n' +
+        (encargoPrepago
+          ? '👤 Cliente: ' + encargoPrepago.cliente_nombre +
+            (encargoPrepago.cliente_whatsapp ? '\n📱 WhatsApp: ' + encargoPrepago.cliente_whatsapp : '') + '\n'
+          : '') +
         '💰 Ya estaba pago — sin comisión para el café'
       );
       return { ok: true };
@@ -870,6 +875,10 @@ function registrarVentaEncargo(payload) {
       (canal === 'web' && !esDirecto ? '📱 Origen: Catálogo web\n' : '') +
       '☕ Café: ' + payload.cafeName + '\n' +
       '📚 ' + payload.titulo + (payload.autor ? ' — ' + payload.autor : '') + '\n' +
+      (encargo
+        ? '👤 Cliente: ' + encargo.cliente_nombre +
+          (encargo.cliente_whatsapp ? '\n📱 WhatsApp: ' + encargo.cliente_whatsapp : '') + '\n'
+        : '') +
       '💵 Precio final: $' + payload.precioFinal +
       (payload.descuentoPct > 0 ? ' (−' + payload.descuentoPct + '%)' : '') + '\n' +
       '💳 Pago: ' + (payload.tipoPago === 'transfer_bookbuster' ? 'Transferencia a Bookbuster' : 'Cobró el café') + '\n' +
