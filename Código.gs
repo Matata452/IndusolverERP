@@ -597,6 +597,31 @@ function getPendingEncargos() {
 }
 
 
+// Seguimiento de TODOS los encargos (cualquier estado, cualquier café),
+// para que Bookbuster pueda hacer seguimiento con los cafés cuando un
+// libro no llegó, no se entregó, o el café se olvidó de marcarlo.
+// Solo lectura — no cambia nada.
+function getEncargosSeguimiento_() {
+  const encargos = getRows_('Encargos').filter(r => (r.tipo || 'compra') === 'compra');
+  if (!encargos.length) return [];
+  const stock = getRows_('Stock');
+  return encargos.map(e => {
+    const s = stock.find(r => String(r.id_encargo) === String(e.id));
+    return {
+      id:        e.id,
+      fecha:     e.fecha,
+      estado:    e.estado,
+      cafeId:    e.id_cafe,
+      cafe:      e.cafe,
+      cliente:   e.cliente_nombre,
+      whatsapp:  e.cliente_whatsapp,
+      titulo:    s ? s.titulo : e.descripcion,
+      autor:     s ? s.autor  : ''
+    };
+  }).sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+}
+
+
 function gestionarEncargo(payload) {
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(10000)) return { ok: false, error: 'Sistema ocupado.' };
@@ -1053,6 +1078,11 @@ function adminGestionarEncargo(pin, payload) {
 function adminCrearEncargoDirecto(pin, payload) {
   requerirPin_(pin);
   return crearEncargoDirecto(payload);
+}
+
+function adminGetEncargosSeguimiento(pin) {
+  requerirPin_(pin);
+  return getEncargosSeguimiento_();
 }
 
 

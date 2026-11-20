@@ -150,6 +150,18 @@
   .checkbox-row.checked .ct::after{content:' ✓ activado';font-weight:700;color:#C77800;}
   .checkbox-row .cd{font-size:.76rem;color:#8B6A2F;margin-top:2px;line-height:1.35;}
 
+  /* ── Seguimiento de encargos ───────────────────────────────── */
+  .chip-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin:8px 0 4px;-webkit-overflow-scrolling:touch;}
+  .chip-row::-webkit-scrollbar{display:none;}
+  .chip{flex-shrink:0;border:1.5px solid var(--border);background:var(--card);color:var(--muted);border-radius:999px;padding:6px 14px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .seg-card{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:6px;}
+  .seg-card .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .badge-pendiente{background:#FFF3E0;color:#BF360C;}
+  .badge-gestionado{background:#E3F2FD;color:#1565C0;}
+  .badge-recibido{background:#E8F5E9;color:#2E7D32;}
+  .badge-entregado{background:#F0F0F0;color:#757575;}
+
   /* ── Deudas de café ────────────────────────────────────────── */
   .dd-list{max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:9px;background:var(--card);margin-top:6px;}
   .deuda-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-bottom:1px solid #F0E8E0;}
@@ -263,9 +275,33 @@
     </div>
     <div class="seccion" id="sec-encargos">
       <div id="en-step1">
-        <button class="btn-directo" onclick="enIrADirecto()">➕ Nuevo encargo directo</button>
-        <div class="field-label" style="margin-top:0">Pendientes (de un café o del catálogo web)</div>
-        <div id="en-list"><div class="empty-mini">Cargando...</div></div>
+        <div class="seg">
+          <button class="on" id="en-tab-pendientes" onclick="enSetVista('pendientes')">📋 Por gestionar</button>
+          <button id="en-tab-seguimiento" onclick="enSetVista('seguimiento')">🔎 Seguimiento</button>
+        </div>
+
+        <div id="en-vista-pendientes">
+          <button class="btn-directo" onclick="enIrADirecto()">➕ Nuevo encargo directo</button>
+          <div class="field-label" style="margin-top:0">Pendientes (de un café o del catálogo web)</div>
+          <div id="en-list"><div class="empty-mini">Cargando...</div></div>
+        </div>
+
+        <div id="en-vista-seguimiento" style="display:none">
+          <span class="field-label" style="margin-top:0">Café</span>
+          <select id="en-seg-cafe"><option value="">— Todos los cafés —</option></select>
+
+          <span class="field-label">Estado</span>
+          <div class="chip-row" id="en-seg-estado-group">
+            <button class="chip on" data-estado="" onclick="enSegFiltrarEstado('', this)">Todos</button>
+            <button class="chip" data-estado="pendiente" onclick="enSegFiltrarEstado('pendiente', this)">⏳ Pendiente</button>
+            <button class="chip" data-estado="gestionado" onclick="enSegFiltrarEstado('gestionado', this)">📦 Gestionado</button>
+            <button class="chip" data-estado="recibido" onclick="enSegFiltrarEstado('recibido', this)">✅ Recibido</button>
+            <button class="chip" data-estado="entregado" onclick="enSegFiltrarEstado('entregado', this)">✓ Entregado</button>
+          </div>
+
+          <div class="counter" id="en-seg-counter">0 encargos</div>
+          <div id="en-seg-list"><div class="empty-mini">Cargando...</div></div>
+        </div>
       </div>
 
       <div id="en-step2" style="display:none">
@@ -752,10 +788,12 @@ function enInit(){
   adminCall('adminGetCafesLista', [], function(cafes){
     enCafes = cafes || [];
     const sel = document.getElementById('en-d-cafe');
+    const selSeg = document.getElementById('en-seg-cafe');
     enCafes.forEach(c => {
       const opt = document.createElement('option');
       opt.value = c.id; opt.textContent = c.nombre;
       sel.appendChild(opt);
+      selSeg.appendChild(opt.cloneNode(true));
     });
   });
 
@@ -771,6 +809,61 @@ function enInit(){
     document.getElementById('en-d-monto-wrap').style.display = this.checked ? '' : 'none';
     enActualizarBotones();
   });
+
+  document.getElementById('en-seg-cafe').addEventListener('change', enSegRender);
+}
+
+function enSetVista(v){
+  document.getElementById('en-tab-pendientes').classList.toggle('on', v === 'pendientes');
+  document.getElementById('en-tab-seguimiento').classList.toggle('on', v === 'seguimiento');
+  document.getElementById('en-vista-pendientes').style.display = v === 'pendientes' ? '' : 'none';
+  document.getElementById('en-vista-seguimiento').style.display = v === 'seguimiento' ? '' : 'none';
+  if (v === 'seguimiento') enSegCargar();
+}
+
+let enSegEncargos = [];
+let enSegEstadoFiltro = '';
+
+function enSegCargar(){
+  const el = document.getElementById('en-seg-list');
+  el.innerHTML = '<div class="empty-mini">Cargando...</div>';
+  adminCall('adminGetEncargosSeguimiento', [], function(d){
+    enSegEncargos = d || [];
+    enSegRender();
+  }, function(){ el.innerHTML = '<div class="empty-mini">Error al cargar.</div>'; });
+}
+
+function enSegFiltrarEstado(estado, btn){
+  enSegEstadoFiltro = estado;
+  document.querySelectorAll('#en-seg-estado-group .chip').forEach(c => c.classList.remove('on'));
+  btn.classList.add('on');
+  enSegRender();
+}
+
+function enSegEstadoLabel(estado){
+  return { pendiente: '⏳ Pendiente', gestionado: '📦 Gestionado', recibido: '✅ Recibido', entregado: '✓ Entregado' }[estado] || estado;
+}
+
+function enSegRender(){
+  const cafeId = document.getElementById('en-seg-cafe').value;
+  const lista = enSegEncargos.filter(e =>
+    (!cafeId || String(e.cafeId) === String(cafeId)) &&
+    (!enSegEstadoFiltro || e.estado === enSegEstadoFiltro)
+  );
+  document.getElementById('en-seg-counter').textContent = lista.length + ' encargo' + (lista.length !== 1 ? 's' : '');
+  const el = document.getElementById('en-seg-list');
+  if (!lista.length){ el.innerHTML = '<div class="empty-mini">No hay encargos con ese filtro.</div>'; return; }
+  el.innerHTML = lista.map(e => `
+    <div class="seg-card">
+      <div class="top">
+        <div>
+          <div class="enc-title">${x(e.titulo)}${e.autor ? ' <span style="font-weight:400;color:var(--muted)">— '+x(e.autor)+'</span>' : ''}</div>
+          <div class="enc-sub">${x(e.cafe)} · ${x(e.cliente)}${e.whatsapp ? ' · '+x(e.whatsapp) : ''}</div>
+          <div class="enc-sub" style="margin-top:2px;color:#aaa">${fDate(e.fecha)}</div>
+        </div>
+        <span class="badge badge-${e.estado}">${enSegEstadoLabel(e.estado)}</span>
+      </div>
+    </div>`).join('');
 }
 
 function cargarEncargosPendientes(){
